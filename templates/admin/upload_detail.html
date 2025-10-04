@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Загрузка #{{ batch['id'] }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3">
+  <h3>Загрузка #{{ batch["id"] }} — {{ batch["filename"] }}</h3>
+  <div>
+    <form method="post" action="{{ url_for('admin.upload_assign_tokens', upload_id=batch['id']) }}" style="display:inline">
+      <button class="btn btn-sm btn-outline-secondary">Назначить токены</button>
+    </form>
+    <a class="btn btn-sm btn-success" href="{{ url_for('admin.upload_download_csv', upload_id=batch['id']) }}">Скачать CSV</a>
+  </div>
+</div>
+
+<p>
+  Предложение: <b>{{ batch["offer_title"] }}</b> |
+  Загружено: {{ batch["uploaded_at"]|fmt_dt }} |
+  Истекает: {{ batch["expires_at"]|fmt_dt }} |
+  Всего строк: {{ batch["count_total"] }}
+</p>
+
+<table class="table table-sm table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Клиент</th>
+      <th>Внешний ID</th>
+      <th>Создано</th>
+      <th>Истекает</th>
+      <th>Статус</th>
+      <th>Открыто</th>
+      <th>Согласие</th>
+      <th>Отказ</th>
+      <th>Ссылка</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r["id"] }}</td>
+      <td>{{ r["customer_account_id"] }}</td>
+      <td>{{ r["external_id"] }}</td>
+      <td>{{ r["created_at"]|fmt_dt }}</td>
+      <td>{{ r["expires_at"]|fmt_dt }}</td>
+      <td>{{ r["status"] }}</td>
+      <td>{{ r["opened_at"]|fmt_dt }}</td>
+      <td>{{ r["agreed_at"]|fmt_dt }}</td>
+      <td>{{ r["rejected_at"]|fmt_dt }}</td>
+      <td>
+        {% if r["token"] %}
+          <a href="{{ request.url_root.strip('/') }}/l/{{ r['token'] }}" target="_blank">Открыть</a>
+        {% else %}-{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

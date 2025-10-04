@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Телеком Интернет-услуги — Bereket</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="antialiased text-gray-900">
+
+  <!-- Навигация -->
+  <nav class="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="https://telecom.kz/ru/" class="flex items-center gap-3">
+        <img src="https://telecom.kz/img/main/logo-telecom.svg" alt="Телеком" class="h-8">
+      </a>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="hover:text-blue-700" href="#">Главная</a>
+        <a class="hover:text-blue-700" href="#">Услуги</a>
+        <a class="hover:text-blue-700" href="#">О нас</a>
+        <a class="hover:text-blue-700" href="#">Контакты</a>
+      </div>
+      <button class="md:hidden" aria-label="menu"><i data-feather="menu"></i></button>
+    </div>
+  </nav>
+
+  <!-- Герой -->
+  <section class="bg-gradient-to-br from-[#0055A5] to-[#003366] text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="grid md:grid-cols-2 gap-10 items-center">
+        <div data-aos="fade-right">
+          <span class="inline-flex items-center gap-2 text-xs font-semibold bg-white/10 rounded-full px-3 py-1 mb-4">
+            <i data-feather="star"></i> Новинка
+          </span>
+          <h1 class="text-4xl md:text-5xl font-extrabold mb-5 leading-tight">Bereket — ваш универсальный пакет связи</h1>
+          <p class="text-lg/8 text-white/90 mb-8">Безлимитный интернет дома, мобильная связь для семьи, ТВ и онлайн-кинотеатры — соберите пакет под себя.</p>
+          <a href="#bereket" class="inline-flex items-center gap-2 bg-[#FF6B00] hover:bg-[#E05D00] transition px-6 py-3 rounded-xl font-bold">
+            Выбрать пакет <i data-feather="chevron-right"></i>
+          </a>
+        </div>
+        <div data-aos="fade-left" class="md:justify-self-end">
+          <img src="https://telecom.kz/img/main/internet/all_in_package.png" alt="Bereket" class="w-full max-w-md md:max-w-lg rounded-xl">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Конфигуратор пакета -->
+  <section id="bereket" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mb-10 text-center">
+        <h2 class="text-3xl font-extrabold">Соберите Bereket под себя</h2>
+        <p class="text-gray-600 mt-2">Выберите срок контракта, оператора и количество SIM — цена пересчитается автоматически.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-[1fr_420px] gap-8 items-start">
+        <!-- Левая колонка: выборы -->
+        <div class="space-y-6">
+
+          <!-- Карточка шапка -->
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 flex gap-4 items-center">
+            
+            <div class="flex-1">
+              <p class="text-xl font-extrabold">Bereket</p>
+              <p class="text-sm text-gray-600">
+                от <span class="line-through text-gray-400">12&nbsp;999</span>
+                <span class="font-bold text-blue-700" id="price-inline">6&nbsp;499</span>₸/мес.
+              </p>
+            </div>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">Новинка</span>
+          </div>
+
+          <!-- 1. Контракт -->
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6" data-group="contract">
+            <h3 class="font-bold text-lg mb-1">Гарантия сохранения цены</h3>
+            <p class="text-gray-600 mb-4">Выберите срок контракта</p>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" data-value="3y"
+                class="opt btn-active inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold border-blue-600 text-blue-700 bg-blue-50">
+                <span class="h-3 w-3 rounded-full border-2 border-blue-600 bg-blue-600"></span> 3 года
+              </button>
+              <button type="button" data-value="no"
+                class="opt inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold border-gray-300 text-gray-800 hover:border-gray-400">
+                <span class="h-3 w-3 rounded-full border-2 border-gray-400"></span> Без контракта
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Оператор -->
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6" data-group="operator">
+            <h3 class="font-bold text-lg mb-1">Мобильный оператор</h3>
+            <p class="text-gray-600 mb-4">Выберите оператора для SIM-карт</p>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" data-value="activ"
+                class="opt btn-active inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold border-blue-600 text-blue-700 bg-blue-50">
+                <span class="h-3 w-3 rounded-full border-2 border-blue-600 bg-blue-600"></span>
+                <img src="https://telecom.kz/img/main/activ.svg" alt="activ" class="h-4"> activ
+              </button>
+              <button type="button" data-value="altel"
+                class="opt inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold border-gray-300 text-gray-800 hover:border-gray-400">
+                <span class="h-3 w-3 rounded-full border-2 border-gray-400"></span>
+                <img src="https://telecom.kz/img/main/altel.svg" alt="altel" class="h-4"> altel
+              </button>
+            </div>
+          </div>
+
+          <!-- 3. Количество SIM -->
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6" data-group="sims">
+            <h3 class="font-bold text-lg mb-1">Количество SIM</h3>
+            <p class="text-gray-600 mb-4">Выберите, сколько SIM-карт вам нужно</p>
+            <div class="flex flex-wrap gap-3">
+              <button type="button" data-value="2"
+                class="opt btn-active inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold border-blue-600 text-blue-700 bg-blue-50">
+                <span class="h-3 w-3 rounded-full border-2 border-blue-600 bg-blue-600"></span>
+                <img src="https://telecom.kz/img/main/sim-2.svg" alt="2 sim" class="h-4"> 2 SIM
+              </button>
+              <button type="button" data-value="4"
+                class="opt inline-flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold border-gray-300 text-gray-800 hover:border-gray-400">
+                <span class="h-3 w-3 rounded-full border-2 border-gray-400"></span>
+                <img src="https://telecom.kz/img/main/sim-4.svg" alt="4 sim" class="h-4"> 4 SIM
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Ресурсы -->
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 space-y-4">
+            <h3 class="font-bold text-lg">Что входит</h3>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="wifi" class="mt-1 text-gray-600"></i>
+              <div><h5 class="font-bold">Безлимитный интернет</h5><p class="text-gray-600">до 500 Мб/с</p></div>
+            </div>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="smartphone" class="mt-1 text-gray-600"></i>
+              <div class="w-full">
+                <h5 class="font-bold">Мобильная связь</h5>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                  <div class="flex justify-between bg-white border rounded-lg p-2"><span class="text-gray-600">Интернет</span><span class="font-semibold">60 ГБ</span></div>
+                  <div class="flex justify-between bg-white border rounded-lg p-2"><span class="text-gray-600">Внутри сети</span><span class="font-semibold">Безлимит</span></div>
+                  <div class="flex justify-between bg-white border rounded-lg p-2"><span class="text-gray-600">Другие/городские</span><span class="font-semibold">250 мин.</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="cpu" class="mt-1 text-gray-600"></i>
+              <div><h5 class="font-bold">1 SIM для гаджетов</h5><p class="text-gray-600">5 ГБ</p></div>
+            </div>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="tv" class="mt-1 text-gray-600"></i>
+              <div><h5 class="font-bold">TV+ mobile</h5><p class="text-gray-600"><a class="text-blue-700 hover:underline" href="javascript:void(0);">Бесплатный TV+ к каждой SIM-карте</a></p></div>
+            </div>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="cast" class="mt-1 text-gray-600"></i>
+              <div><h5 class="font-bold">Телевидение</h5><p class="text-gray-600"><a class="text-blue-700 hover:underline" href="javascript:void(0);">170+ телеканалов</a></p></div>
+            </div>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="film" class="mt-1 text-gray-600"></i>
+              <div><h5 class="font-bold">Онлайн-кинотеатры</h5><p class="text-gray-600"><a class="text-blue-700 hover:underline" href="javascript:void(0);">9 онлайн-кинотеатров</a></p></div>
+            </div>
+
+            <div class="flex gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">
+              <i data-feather="users" class="mt-1 text-gray-600"></i>
+              <div><h5 class="font-bold">Подписка Family</h5><p class="text-gray-600"><a class="text-blue-700 hover:underline" href="javascript:void(0);">Бонусная услуга</a></p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Правая колонка: сводка / цена -->
+        <aside class="lg:sticky lg:top-24">
+          <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="text-sm text-gray-500">Цена за месяц</p>
+                <div class="mt-1">
+                  <span class="text-gray-400 line-through text-sm" id="old-price">12&nbsp;999₸</span>
+                  <div class="text-3xl font-extrabold text-blue-700" id="price">6&nbsp;499₸</div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1" id="price-note">* цена с учётом выбранных опций</p>
+              </div>
+              
+            </div>
+
+            <hr class="my-6">
+
+            <div class="space-y-3 text-sm">
+              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Безлимитный домашний интернет до 500 Мб/с</span></div>
+              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Мобильная связь: 60 ГБ, безлимит внутри сети, 250 мин.</span></div>
+              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>1 SIM для гаджетов — 5 ГБ</span></div>
+              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>TV+ mobile и 170+ каналов</span></div>
+              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>9 онлайн-кинотеатров</span></div>
+            </div>
+
+            <div class="mt-6 space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-gray-600">Контракт</span><strong id="summary-contract">3 года</strong></div>
+              <div class="flex justify-between"><span class="text-gray-600">Оператор</span><strong id="summary-operator">activ</strong></div>
+              <div class="flex justify-between"><span class="text-gray-600">SIM-карт</span><strong id="summary-sims">2</strong></div>
+            </div>
+
+            <button class="mt-6 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-extrabold text-white bg-blue-600 hover:bg-blue-700 transition">
+              <i data-feather="zap"></i> Подключить
+            </button>
+
+            <p class="text-xs text-gray-500 mt-3">Оборудование предоставляется на период действия договора. Возврат обязателен при расторжении.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Соглашение -->
+  <section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+        <h2 class="text-2xl font-bold mb-6 text-center">Договор на предоставление интернет-услуг</h2>
+        <div class="bg-white p-6 rounded-xl mb-6 max-h-96 overflow-y-auto border border-gray-200">
+          <h3 class="font-bold mb-3">Условия</h3>
+          <p class="mb-4">Оформляя подписку на наш интернет, вы соглашаетесь со следующими условиями:</p>
+          <ol class="list-decimal pl-5 space-y-2">
+            <li>Услуга предоставляется на ежемесячной основе.</li>
+            <li>Минимальный срок договора — 12 месяцев.</li>
+            <li>При досрочном расторжении взымается штраф 10 000₸.</li>
+            <li>Скорость предоставляется «до» заявленной и может меняться в зависимости от загрузки сети.</li>
+            <li>Доступность услуги зависит от технической возможности по вашему адресу.</li>
+            <li>Мы оставляем за собой право изменять условия обслуживания с уведомлением за 30 дней.</li>
+            <li>Применяется политика допустимого использования.</li>
+            <li>Оборудование необходимо вернуть при расторжении договора, иначе взымается дополнительная плата.</li>
+          </ol>
+          <h3 class="font-bold mt-6 mb-3">Политика конфиденциальности</h3>
+          <p>Мы собираем только необходимую информацию для оказания услуг и выставления счетов. Мы не отслеживаем вашу интернет-активность, за исключением случаев, необходимых для управления сетью и обеспечения безопасности.</p>
+        </div>
+
+        <div class="flex items-center gap-3 mb-4">
+          <input type="checkbox" id="agree" class="h-5 w-5">
+          <label for="agree" class="text-gray-700">Я прочитал(а) и согласен(а) с условиями выше</label>
+        </div>
+        <button id="acceptBtn" disabled class="w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-xl transition">
+          Принять и продолжить
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Футер -->
+  <footer class="bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <h3 class="text-xl font-bold mb-4">Телеком</h3>
+          <p class="text-gray-400">Надёжные интернет-услуги с 2005 года.</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold mb-4">Услуги</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white">Домашний интернет</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Бизнес-решения</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">ТВ-пакеты</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Мобильные услуги</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold mb-4">Поддержка</h3>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white">Связаться с нами</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Частые вопросы</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Статус сети</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white">Центр поддержки</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold mb-4">Мы в соцсетях</h3>
+          <div class="flex gap-4">
+            <a href="https://www.facebook.com/telecomkz/" class="text-gray-400 hover:text-white"><i data-feather="facebook"></i></a>
+            <a href="https://t.me/kazakhtelecom_official" class="text-gray-400 hover:text-white"><i data-feather="send"></i></a>
+            <a href="https://www.instagram.com/telecomkz/" class="text-gray-400 hover:text-white"><i data-feather="instagram"></i></a>
+            <a href="https://www.youtube.com/user/Kazakhtelecom" class="text-gray-400 hover:text-white"><i data-feather="youtube"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+        <p>© 2025 АО «Казахтелеком». Все права защищены</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    AOS.init();
+    feather.replace();
+
+    // Кнопка "Принять"
+    const agree = document.getElementById('agree');
+    const acceptBtn = document.getElementById('acceptBtn');
+    if (agree && acceptBtn) {
+      agree.addEventListener('change', () => {
+        const on = agree.checked;
+        acceptBtn.disabled = !on;
+        acceptBtn.classList.toggle('bg-gray-400', !on);
+        acceptBtn.classList.toggle('bg-blue-600', on);
+        acceptBtn.classList.toggle('hover:bg-blue-700', on);
+      });
+      acceptBtn.addEventListener('click', () => {
+        if (!acceptBtn.disabled) alert('Спасибо! Ваш интернет будет активирован в ближайшее время.');
+      });
+    }
+
+    // Конфигуратор
+    const state = { contract: '3y', operator: 'activ', sims: 2 };
+    const baseOld = 12999;
+    const baseNew = 6499;
+
+    // Правила ценообразования (можно менять под реальную тарифку)
+    function calcPrice(s) {
+      let price = baseNew;
+      // контракт 3 года — скидка 500₸; без контракта — +500₸
+      price += s.contract === '3y' ? -500 : 500;
+      // 4 SIM — +1000₸
+      price += Number(s.sims) === 4 ? 1000 : 0;
+      return Math.max(price, 0);
+    }
+
+    function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '&nbsp;'); }
+
+    const priceEl = document.getElementById('price');
+    const priceInlineEl = document.getElementById('price-inline');
+    const oldEl = document.getElementById('old-price');
+    const sContract = document.getElementById('summary-contract');
+    const sOperator = document.getElementById('summary-operator');
+    const sSims = document.getElementById('summary-sims');
+
+    function render() {
+      const p = calcPrice(state);
+      if (priceEl) priceEl.innerHTML = fmt(p) + '₸';
+      if (priceInlineEl) priceInlineEl.innerHTML = fmt(p);
+      if (oldEl) oldEl.innerHTML = fmt(baseOld) + '₸';
+      if (sContract) sContract.textContent = state.contract === '3y' ? '3 года' : 'Без контракта';
+      if (sOperator) sOperator.textContent = state.operator;
+      if (sSims) sSims.textContent = String(state.sims);
+    }
+    render();
+
+    // Универсальный обработчик групп
+    document.querySelectorAll('[data-group]').forEach(group => {
+      const key = group.getAttribute('data-group'); // contract | operator | sims
+      group.addEventListener('click', (e) => {
+        const btn = e.target.closest('.opt');
+        if (!btn) return;
+        // снимаем актив
+        group.querySelectorAll('.opt').forEach(b => {
+          b.classList.remove('btn-active','border-blue-600','text-blue-700','bg-blue-50');
+          b.classList.add('border-gray-300','text-gray-800');
+          const dot = b.querySelector('span.h-3.w-3');
+          if (dot) { dot.classList.remove('border-blue-600','bg-blue-600'); dot.classList.add('border-gray-400'); }
+        });
+        // активируем выбранную
+        btn.classList.add('btn-active','border-blue-600','text-blue-700','bg-blue-50');
+        btn.classList.remove('border-gray-300','text-gray-800');
+        const dot = btn.querySelector('span.h-3.w-3');
+        if (dot) { dot.classList.add('border-blue-600','bg-blue-600'); dot.classList.remove('border-gray-400'); }
+        // обновляем состояние
+        const val = btn.getAttribute('data-value');
+        if (key === 'contract') state.contract = val;
+        if (key === 'operator') state.operator = val;
+        if (key === 'sims') state.sims = Number(val);
+        render();
+      });
+    });
+  </script>
+</body>
+</html>

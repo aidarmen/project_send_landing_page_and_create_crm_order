@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Панель управления{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col"><div class="card p-3"><b>Пользователи</b><div>{{ users }}</div></div></div>
+  <div class="col"><div class="card p-3"><b>Предложения</b><div>{{ offers }}</div></div></div>
+  <div class="col"><div class="card p-3"><b>Ссылки</b><div>{{ links }}</div></div></div>
+</div>
+<div class="mt-4">
+  <h4>Статусы</h4>
+  <ul>
+    {% for s in stats %}
+      <li>{{ s["status"] }}: {{ s["n"] }}</li>
+    {% endfor %}
+  </ul>
+</div>
+<div class="mt-4">
+  <h4>Недавние загрузки</h4>
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Файл</th>
+        <th>Предложение</th>
+        <th>Загружено</th>
+        <th>Истекает</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in uploads %}
+      <tr>
+        <td>{{ u["id"] }}</td>
+        <td>{{ u["filename"] }}</td>
+        <td>{{ u["offer_title"] }}</td>
+        <td>{{ u["uploaded_at"]|fmt_dt }}</td>
+        <td>{{ u["expires_at"]|fmt_dt }}</td>
+        <td>
+          <a class="btn btn-sm btn-outline-primary"
+             href="{{ url_for('admin.upload_detail', upload_id=u['id']) }}">
+            Открыть
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

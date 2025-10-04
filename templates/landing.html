@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ offer.title }} — Подключение</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="antialiased text-gray-900">
+
+  <!-- Навигация (минимальная) -->
+  <nav class="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i data-feather="layers" class="text-blue-700"></i>
+        <span class="font-bold">Онлайн-подключение</span>
+      </div>
+      {% if offer.details.badges and offer.details.badges|length %}
+        <div class="hidden md:flex items-center gap-2">
+          {% for b in offer.details.badges %}
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-600/10 text-blue-700">{{ b }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- Герой -->
+  <section class="bg-gradient-to-br from-[#0055A5] to-[#003366] text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div data-aos="fade-right">
+          <h1 class="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">{{ offer.title }}</h1>
+          {% if offer.price %}
+            <p class="text-lg/8 text-white/90 mb-4">
+              Цена: <span class="text-2xl font-extrabold">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }}</span> {{ offer.currency or '₸' }}/мес
+            </p>
+          {% endif %}
+          <p class="text-white/90">
+            Ниже — состав пакета. Нажмите «Согласен», чтобы подтвердить подключение на условиях тарифа.
+          </p>
+        </div>
+        <div data-aos="fade-left" class="md:justify-self-end">
+          <div class="rounded-xl bg-white/10 p-6">
+            <div class="grid grid-cols-3 gap-6">
+              <i data-feather="wifi"></i>
+              <i data-feather="smartphone"></i>
+              <i data-feather="tv"></i>
+              <i data-feather="phone"></i>
+              <i data-feather="cpu"></i>
+              <i data-feather="film"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Содержимое: динамические компоненты + сводка/согласие -->
+  <section class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_380px] gap-8 items-start">
+
+      <!-- Левая колонка: что входит -->
+      <div class="space-y-6">
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6">
+          <h2 class="text-2xl font-extrabold">Что входит</h2>
+          <p class="text-gray-600">Пакет сформирован индивидуально — некоторые услуги могут отсутствовать.</p>
+        </div>
+
+        {% set comps = offer.details.components or [] %}
+        {% if comps and comps|length %}
+          {% for c in comps %}
+            <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 flex gap-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
+              <div class="shrink-0 mt-1 text-gray-600">
+                {% if c.type == 'internet' %}
+                  <i data-feather="wifi"></i>
+                {% elif c.type == 'mobile' %}
+                  <i data-feather="smartphone"></i>
+                {% elif c.type == 'tv' %}
+                  <i data-feather="tv"></i>
+                {% elif c.type == 'home_phone' %}
+                  <i data-feather="phone"></i>
+                {% elif c.type == 'sim_devices' %}
+                  <i data-feather="cpu"></i>
+                {% else %}
+                  <i data-feather="box"></i>
+                {% endif %}
+              </div>
+
+              <div class="w-full">
+                <h3 class="font-bold text-lg mb-2">{{ c.title }}</h3>
+
+                {% if c.type == 'internet' %}
+                  <p class="text-gray-700">
+                    {% if c.max_speed_mbps %}До {{ c.max_speed_mbps }} Мбит/с{% else %}Домашний интернет{% endif %}
+                  </p>
+
+                {% elif c.type == 'mobile' %}
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                    {% if c.sims %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">SIM</span><span class="font-semibold">{{ c.sims }}</span></div>{% endif %}
+                    {% if c.data_gb %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Интернет</span><span class="font-semibold">{{ c.data_gb }} ГБ</span></div>{% endif %}
+                    {% if c.after_cap_kbps %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">После лимита</span><span class="font-semibold">до {{ c.after_cap_kbps }} Кбит/с</span></div>{% endif %}
+                    {% if c.onnet_minutes is not none %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Внутри сети</span><span class="font-semibold">{{ c.onnet_minutes if c.onnet_minutes>0 else 'Безлимит' }}</span></div>{% endif %}
+                    {% if c.offnet_minutes is not none %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Другие/городские</span><span class="font-semibold">{{ c.offnet_minutes }} мин</span></div>{% endif %}
+                    {% if c.sms %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">SMS</span><span class="font-semibold">{{ c.sms }}</span></div>{% endif %}
+                  </div>
+                  {% if c.tv_plus_included %}
+                    <p class="mt-2 text-sm text-blue-700">Подписка TV+ включена для каждой SIM</p>
+                  {% endif %}
+
+                {% elif c.type == 'tv' %}
+                  <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    {% if c.channels %}<li>{{ c.channels }}+ каналов</li>{% endif %}
+                    {% if c.ott and c.ott|length %}<li>Онлайн-кинотеатры: {{ c.ott|join(', ') }}</li>{% endif %}
+                  </ul>
+
+                {% elif c.type == 'home_phone' %}
+                  <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    {% if c.onnet_minutes is not none %}<li>{{ c.onnet_minutes if c.onnet_minutes>0 else 'Безлимит' }} мин внутри сети</li>{% endif %}
+                    {% if c.offnet_minutes is not none %}<li>{{ c.offnet_minutes }} мин на другие сети/городские</li>{% endif %}
+                  </ul>
+
+                {% elif c.type == 'sim_devices' %}
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                    {% if c.sims %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">SIM</span><span class="font-semibold">{{ c.sims }}</span></div>{% endif %}
+                    {% if c.data_gb %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Интернет</span><span class="font-semibold">{{ c.data_gb }} ГБ</span></div>{% endif %}
+                    {% if c.after_cap_kbps %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">После лимита</span><span class="font-semibold">до {{ c.after_cap_kbps }} Кбит/с</span></div>{% endif %}
+                  </div>
+
+                {% else %}
+                  <p class="text-gray-700">Параметры услуги указаны в договоре ниже.</p>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6">
+            <p class="text-gray-600">Состав пакета не указан.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Правая колонка: сводка и согласие -->
+      <aside class="lg:sticky lg:top-20">
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-sm text-gray-500">Цена за месяц</p>
+              <div class="mt-1">
+                {% if offer.price %}
+                  <div class="text-3xl font-extrabold text-blue-700">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }} {{ offer.currency or '₸' }}</div>
+                {% else %}
+                  <div class="text-xl font-bold text-blue-700">Уточняется</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <!-- Короткий список преимуществ из компонентов -->
+          <div class="space-y-3 text-sm">
+            {% for c in comps %}
+              {% if c.type == 'internet' and c.max_speed_mbps %}
+                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Домашний интернет до {{ c.max_speed_mbps }} Мбит/с</span></div>
+              {% elif c.type == 'mobile' and c.data_gb %}
+                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Мобильный интернет {{ c.data_gb }} ГБ{% if c.sims %}, {{ c.sims }} SIM{% endif %}</span></div>
+              {% elif c.type == 'tv' and c.channels %}
+                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>{{ c.channels }}+ ТВ-каналов</span></div>
+              {% elif c.type == 'home_phone' %}
+                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Домашний телефон в пакете</span></div>
+              {% elif c.type == 'sim_devices' and c.data_gb %}
+                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>SIM для устройств — {{ c.data_gb }} ГБ</span></div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <form method="post" action="/agree" class="mt-6">
+            <input type="hidden" name="token" value="{{ token }}">
+            <div class="flex items-center gap-2 mb-3">
+              <input type="checkbox" id="agree" class="h-5 w-5">
+              <label for="agree" class="text-gray-700 text-sm">Я прочитал(а) условия ниже и согласен(а)</label>
+            </div>
+            <button id="acceptBtn"
+                    class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-extrabold text-white bg-gray-400"
+                    disabled>
+              <i data-feather="check-circle"></i> Согласен
+            </button>
+          </form>
+
+          <form method="post" action="/reject" class="mt-2">
+            <input type="hidden" name="token" value="{{ token }}">
+            <button class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-red-700 bg-red-50 hover:bg-red-100">
+              <i data-feather="x-circle"></i> Отказаться
+            </button>
+          </form>
+
+          <p class="text-xs text-gray-500 mt-4">
+            Нажимая «Согласен», вы даёте согласие на подключение указанных услуг и обработку данных. Фиксируются время, IP и User-Agent.
+            Ссылка одноразовая и может истечь.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Договор / условия -->
+  <section class="py-12 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+        <h2 class="text-2xl font-bold mb-6 text-center">Условия предоставления услуг</h2>
+        <div class="bg-white p-6 rounded-xl mb-6 max-h-96 overflow-y-auto border border-gray-200 text-sm leading-6">
+          <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+            <li>Услуги предоставляются на ежемесячной основе; оплата — помесячно.</li>
+            <li>Скорость «до» заявленной и может меняться в зависимости от нагрузки сети и технической возможности.</li>
+            <li>Оборудование предоставляется на период договора и подлежит возврату при расторжении.</li>
+            <li>Мы можем изменять условия с уведомлением не менее чем за 30 дней.</li>
+            <li>Применяется политика допустимого использования и правила оператора связи.</li>
+          </ol>
+          <h3 class="font-bold mt-6 mb-2">Конфиденциальность</h3>
+          <p class="text-gray-700">Мы обрабатываем только необходимые данные, не отслеживаем контент трафика, за исключением случаев,
+            предусмотренных законом для обеспечения безопасности сети.</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-500">
+          <i data-feather="shield"></i>
+          <span>Ваше согласие фиксируется в журнале (время, IP, браузер). Токен одноразовый.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400">
+      © {{ (now() if false) or '2025' }} Все права защищены
+    </div>
+  </footer>
+
+  <script>
+    AOS.init(); feather.replace();
+
+    // Включать кнопку «Согласен» только после галочки
+    const agree = document.getElementById('agree');
+    const acceptBtn = document.getElementById('acceptBtn');
+    if (agree && acceptBtn) {
+      agree.addEventListener('change', () => {
+        const on = agree.checked;
+        acceptBtn.disabled = !on;
+        acceptBtn.classList.toggle('bg-gray-400', !on);
+        acceptBtn.classList.toggle('bg-blue-600', on);
+        acceptBtn.classList.toggle('hover:bg-blue-700', on);
+      });
+    }
+  </script>
+</body>
+</html>

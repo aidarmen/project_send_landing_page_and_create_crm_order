@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Предложение{% endblock %}
+{% block content %}
+<h3>{{ 'Редактировать предложение' if row else 'Новое предложение' }}</h3>
+
+<form method="post" action="{{ url_for('admin.offer_save') }}" class="row g-3" id="offerForm">
+  {% if row %}<input type="hidden" name="id" value="{{ row['id'] }}">{% endif %}
+
+  <div class="col-md-6">
+    <label class="form-label">Название</label>
+    <input class="form-control" name="title" required value="{{ row and row['title'] }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Тип пакета (ярлык)</label>
+    <select class="form-select" name="bundle" required>
+      {% for val, label in [('internet','интернет'), ('fms','fms'), ('tv','тв'), ('bundle','пакет')] %}
+        <option value="{{ val }}" {% if row and row['bundle']==val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Цена</label>
+    <input class="form-control" name="price" type="number" step="1" value="{{ row and row['price'] }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Валюта</label>
+    <input class="form-control" name="currency" value="{{ (row and row['currency']) or 'KZT' }}">
+  </div>
+
+  <div class="col-12"><hr></div>
+
+  <div class="col-md-6">
+    <label class="form-label">Бейджи (через запятую)</label>
+    <input class="form-control" name="badge_text" value="{{ badge_text }}">
+  </div>
+
+  <div class="col-12"><strong>Включить услуги в это предложение:</strong></div>
+
+  <!-- ИНТЕРНЕТ -->
+  {% set internet = comp.get('internet', {}) %}
+  <div class="col-12 form-check">
+    <input class="form-check-input svc-toggle" type="checkbox" id="has_internet" name="has_internet" {% if internet %}checked{% endif %}>
+    <label class="form-check-label" for="has_internet">Интернет</label>
+  </div>
+  <div class="svc internet row g-2 {% if not internet %}d-none{% endif %}">
+    <div class="col-md-6">
+      <label class="form-label">Заголовок</label>
+      <input class="form-control" name="internet_title" value="{{ internet.get('title','Домашний интернет') }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Макс. скорость (Мбит/с)</label>
+      <input class="form-control" name="internet_max_speed_mbps" type="number" value="{{ internet.get('max_speed_mbps','') }}">
+    </div>
+  </div>
+
+  <!-- ТВ -->
+  {% set tv = comp.get('tv', {}) %}
+  <div class="col-12 form-check">
+    <input class="form-check-input svc-toggle" type="checkbox" id="has_tv" name="has_tv" {% if tv %}checked{% endif %}>
+    <label class="form-check-label" for="has_tv">ТВ</label>
+  </div>
+  <div class="svc tv row g-2 {% if not tv %}d-none{% endif %}">
+    <div class="col-md-6">
+      <label class="form-label">Заголовок</label>
+      <input class="form-control" name="tv_title" value="{{ tv.get('title','Телевидение, фильмы и сериалы') }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Каналы</label>
+      <input class="form-control" name="tv_channels" type="number" value="{{ tv.get('channels','') }}">
+    </div>
+    <div class="col-md-12">
+      <label class="form-label">Онлайн-кинотеатры (через запятую)</label>
+      <input class="form-control" name="tv_ott" value="{{ (tv.get('ott') or [])|join(', ') }}">
+    </div>
+  </div>
+
+  <!-- МОБИЛЬНАЯ СВЯЗЬ -->
+  {% set mobile = comp.get('mobile', {}) %}
+  <div class="col-12 form-check">
+    <input class="form-check-input svc-toggle" type="checkbox" id="has_mobile" name="has_mobile" {% if mobile %}checked{% endif %}>
+    <label class="form-check-label" for="has_mobile">Мобильная связь</label>
+  </div>
+  <div class="svc mobile row g-2 {% if not mobile %}d-none{% endif %}">
+    <div class="col-md-6">
+      <label class="form-label">Заголовок</label>
+      <input class="form-control" name="mobile_title" value="{{ mobile.get('title','Мобильная связь') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">SIM-карт</label>
+      <input class="form-control" name="mobile_sims" type="number" value="{{ mobile.get('sims','') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Интернет (ГБ)</label>
+      <input class="form-control" name="mobile_data_gb" type="number" value="{{ mobile.get('data_gb','') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">После лимита (Кбит/с)</label>
+      <input class="form-control" name="mobile_after_cap_kbps" type="number" value="{{ mobile.get('after_cap_kbps','') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Минут внутри сети</label>
+      <input class="form-control" name="mobile_onnet_minutes" type="number" value="{{ mobile.get('onnet_minutes','') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Минут на другие/городские</label>
+      <input class="form-control" name="mobile_offnet_minutes" type="number" value="{{ mobile.get('offnet_minutes','') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">SMS</label>
+      <input class="form-control" name="mobile_sms" type="number" value="{{ mobile.get('sms','') }}">
+    </div>
+    <div class="col-md-3 form-check mt-4">
+      <input class="form-check-input" type="checkbox" name="mobile_tv_plus_included" {% if mobile.get('tv_plus_included') %}checked{% endif %}>
+      <label class="form-check-label">TV+ включён</label>
+    </div>
+  </div>
+
+  <!-- ДОМАШНИЙ ТЕЛЕФОН -->
+  {% set phone = comp.get('home_phone', {}) %}
+  <div class="col-12 form-check">
+    <input class="form-check-input svc-toggle" type="checkbox" id="has_home_phone" name="has_home_phone" {% if phone %}checked{% endif %}>
+    <label class="form-check-label" for="has_home_phone">Домашний телефон</label>
+  </div>
+  <div class="svc home_phone row g-2 {% if not phone %}d-none{% endif %}">
+    <div class="col-md-6">
+      <label class="form-label">Заголовок</label>
+      <input class="form-control" name="phone_title" value="{{ phone.get('title','Домашний телефон') }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Минут внутри сети</label>
+      <input class="form-control" name="phone_onnet_minutes" type="number" value="{{ phone.get('onnet_minutes','') }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Минут на другие/городские</label>
+      <input class="form-control" name="phone_offnet_minutes" type="number" value="{{ phone.get('offnet_minutes','') }}">
+    </div>
+  </div>
+
+  <!-- SIM ДЛЯ УСТРОЙСТВ -->
+  {% set iot = comp.get('sim_devices', {}) %}
+  <div class="col-12 form-check">
+    <input class="form-check-input svc-toggle" type="checkbox" id="has_sim_devices" name="has_sim_devices" {% if iot %}checked{% endif %}>
+    <label class="form-check-label" for="has_sim_devices">SIM для устройств</label>
+  </div>
+  <div class="svc sim_devices row g-2 {% if not iot %}d-none{% endif %}">
+    <div class="col-md-6">
+      <label class="form-label">Заголовок</label>
+      <input class="form-control" name="iot_title" value="{{ iot.get('title','SIM для устройств') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">SIM-карт</label>
+      <input class="form-control" name="iot_sims" type="number" value="{{ iot.get('sims','') }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Интернет (ГБ)</label>
+      <input class="form-control" name="iot_data_gb" type="number" value="{{ iot.get('data_gb','') }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">После лимита (Кбит/с)</label>
+      <input class="form-control" name="iot_after_cap_kbps" type="number" value="{{ iot.get('after_cap_kbps','') }}">
+    </div>
+  </div>
+
+  <div class="col-12"><hr></div>
+
+  <!-- Связка с Order API -->
+  <div class="col-12"><strong>Связка с Order API</strong></div>
+  <div class="col-md-3">
+    <label class="form-label">PRODUCT_OFFER_ID</label>
+    <input class="form-control" name="product_offer_id" value="{{ row and row['product_offer_id'] }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">PRODUCT_OFFER_STRUCT_ID</label>
+    <input class="form-control" name="product_offer_struct_id" value="{{ row and row['product_offer_struct_id'] }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">PO_STRUCT_ELEMENT_ID</label>
+    <input class="form-control" name="po_struct_element_id" value="{{ row and row['po_struct_element_id'] }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">PRODUCT_NUM</label>
+    <input class="form-control" name="product_num" value="{{ row and row['product_num'] }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">RESOURCE_SPEC_ID</label>
+    <input class="form-control" name="resource_spec_id" value="{{ row and row['resource_spec_id'] }}">
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary">Сохранить</button>
+  </div>
+</form>
+
+<script>
+  // показать/скрыть секции по чекбоксам
+  document.querySelectorAll(".svc-toggle").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const cls = cb.id.replace("has_", "");
+      const block = document.querySelector(".svc."+cls);
+      if (block) block.classList.toggle("d-none", !cb.checked);
+    });
+  });
+</script>
+{% endblock %}

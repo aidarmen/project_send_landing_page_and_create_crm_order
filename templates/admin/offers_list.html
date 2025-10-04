@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Предложения{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Предложения</h3>
+  <a class="btn btn-primary" href="{{ url_for('admin.offer_new') }}">Новое предложение</a>
+</div>
+
+{% set bundle_labels = {'internet':'интернет','tv':'тв','bundle':'пакет','fms':'fms'} %}
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Название</th>
+      <th>Тип пакета</th>
+      <th>Цена</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r["id"] }}</td>
+      <td>{{ r["title"] }}</td>
+      <td>{{ bundle_labels.get(r["bundle"], r["bundle"]) }}</td>
+      <td>
+        {% if r["price"] %}
+          {{ r["price"] }} {{ r["currency"] }}
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td class="text-end">
+        <a class="btn btn-sm btn-outline-secondary"
+           href="{{ url_for('admin.offer_edit', oid=r['id']) }}">
+          Редактировать
+        </a>
+        <form method="post"
+              action="{{ url_for('admin.offer_delete', oid=r['id']) }}"
+              style="display:inline"
+              onsubmit="return confirm('Удалить это предложение?')">
+          <button class="btn btn-sm btn-outline-danger">Удалить</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

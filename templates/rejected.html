@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Отказ зафиксирован — {{ offer.title }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+      <div class="mx-auto h-14 w-14 rounded-full bg-red-50 flex items-center justify-center">
+        <i data-feather="x" class="text-red-600"></i>
+      </div>
+
+      <h1 class="mt-4 text-2xl font-extrabold">Отказ зафиксирован</h1>
+
+      <p class="mt-2 text-gray-600">
+        Вы отказались от подключения: <b>{{ offer.title }}</b>.
+        {% if offer.price %}<br>Предложение стоило: <b>{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }}</b> {{ offer.currency or '₸' }}/мес.{% endif %}
+        {% if already %}<br><span class="text-gray-500">Ранее вы уже отказывались: <span id="rejectedAtPrev">{{ when or '' }}</span></span>{% endif %}
+      </p>
+
+      <!-- Состав пакета (для прозрачности) -->
+      {% if offer.details and offer.details.components %}
+      <div class="mt-6 text-left bg-gray-50 rounded-xl p-4 border border-gray-200">
+        <p class="font-semibold">Что предлагалось:</p>
+        <ul class="list-disc pl-5 text-gray-700 mt-2 space-y-1">
+          {% for c in offer.details.components %}
+            <li>
+              <span class="font-medium">{{ c.title }}</span>
+              {% if c.type == 'internet' and c.max_speed_mbps %} — до {{ c.max_speed_mbps }} Мбит/с{% endif %}
+              {% if c.type == 'mobile' %}
+                {% set parts = [] %}
+                {% if c.sims %}{% set _ = parts.append(c.sims ~ ' SIM') %}{% endif %}
+                {% if c.data_gb %}{% set _ = parts.append(c.data_gb ~ ' ГБ') %}{% endif %}
+                {% if c.offnet_minutes is not none %}{% set _ = parts.append(c.offnet_minutes ~ ' мин. другие/городские') %}{% endif %}
+                {% if parts %} — {{ parts|join(', ') }}{% endif %}
+              {% endif %}
+              {% if c.type == 'tv' and c.channels %} — {{ c.channels }}+ каналов{% endif %}
+              {% if c.type == 'sim_devices' and c.data_gb %} — {{ c.data_gb }} ГБ для устройств{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- Время фиксации -->
+      <p class="mt-6 text-sm text-gray-500">
+        Время фиксации (UTC): <span id="rejectedAtUtc">{{ when or '' }}</span><br>
+        В вашем часовом поясе: <span id="rejectedAtLocal" class="font-medium">—</span>
+      </p>
+
+      <p class="mt-4 text-sm text-gray-500">
+        Если это ошибка — обратитесь в поддержку или запросите новую ссылку.
+      </p>
+
+      <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="https://telecom.kz/ru/"
+           class="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-gray-900 text-white font-bold hover:bg-black">
+          Вернуться
+        </a>
+        <a href="javascript:window.close()"
+           class="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-gray-300 text-gray-800 hover:bg-gray-50">
+          Закрыть окно
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    feather.replace();
+
+    // Переводим ISO-время (UTC) в локальное
+    (function () {
+      function fmt(dt) {
+        try {
+          return new Intl.DateTimeFormat(undefined, {
+            year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+          }).format(dt);
+        } catch { return ''; }
+      }
+      function convert(idIn, idOut) {
+        const inEl = document.getElementById(idIn);
+        const outEl = document.getElementById(idOut);
+        if (!inEl || !outEl) return;
+        const raw = inEl.textContent.trim();
+        if (!raw) { outEl.textContent = '—'; return; }
+        const iso = raw.endsWith('Z') || raw.includes('+') ? raw : raw + 'Z';
+        const d = new Date(iso);
+        outEl.textContent = isNaN(d) ? raw : fmt(d);
+      }
+      convert('rejectedAtUtc', 'rejectedAtLocal');
+
+      // История предыдущего отказа (если был)
+      const prevEl = document.getElementById('rejectedAtPrev');
+      if (prevEl) {
+        const raw = prevEl.textContent.trim();
+        if (raw) {
+          const iso = raw.endsWith('Z') || raw.includes('+') ? raw : raw + 'Z';
+          const d = new Date(iso);
+          if (!isNaN(d)) prevEl.textContent = fmt(d) + ' (лок.)';
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

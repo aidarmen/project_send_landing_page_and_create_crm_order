@@ -1,0 +1,22 @@
+services:
+  web:
+    build: .
+    image: landing-admin:latest
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: "change-me"             # <<< set a strong secret
+      ORDER_API_URL: "http://10.8.219.66:8501"
+      TOKEN_MAX_AGE_SECONDS: 2592000
+      DB_PATH: /app/data/app.db
+      TZ: Asia/Almaty
+    volumes:
+      - ./data:/app/data           # SQLite & any persisted files
+      - ./uploads:/app/uploads     # if you save user files/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

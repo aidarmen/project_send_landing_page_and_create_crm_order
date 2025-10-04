@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Новая загрузка{% endblock %}
+{% block content %}
+<h3>Новая загрузка</h3>
+
+{% set bundle_labels = {'internet':'интернет','tv':'тв','bundle':'пакет','fms':'fms'} %}
+
+<form method="post" enctype="multipart/form-data" class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label">Файл (CSV или Excel)</label>
+    <input class="form-control" type="file" name="file" accept=".csv,.xlsx,.xls" required>
+    <div class="form-text">Обязательный столбец: <code>customer_id</code></div>
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label">Предложение</label>
+    <select class="form-select" name="offer_id" required>
+      {% for o in offers %}
+        <option value="{{ o['id'] }}">
+          {{ o['title'] }} ({{ bundle_labels.get(o['bundle'], o['bundle']) }})
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Срок действия (дней)</label>
+    <input class="form-control" name="expires_in_days" type="number" value="7" required>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">FILIAL_ID по умолчанию (для новых пользователей)</label>
+    <input class="form-control" name="default_filial_id" type="number" value="17" required>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Префикс внешнего ID</label>
+    <input class="form-control" name="external_prefix" value="BATCH">
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary">Загрузить и создать</button>
+  </div>
+</form>
+{% endblock %}

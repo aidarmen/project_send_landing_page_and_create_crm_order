@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Загрузки{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Загрузки</h3>
+  <a class="btn btn-primary" href="{{ url_for('admin.upload_form') }}">Новая загрузка</a>
+</div>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Файл</th>
+      <th>Предложение</th>
+      <th>Загружено</th>
+      <th>Истекает</th>
+      <th>Всего</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r["id"] }}</td>
+      <td>{{ r["filename"] }}</td>
+      <td>{{ r["offer_title"] }}</td>
+      <td>{{ r["uploaded_at"]|fmt_dt }}</td>
+      <td>{{ r["expires_at"]|fmt_dt }}</td>
+      <td>{{ r["count_total"] }}</td>
+      <td class="text-end">
+        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.upload_detail', upload_id=r['id']) }}">Открыть</a>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
