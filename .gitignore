@@ -31,3 +31,5 @@ build/
 *.xls
 *.csv
 '@ | Out-File -Encoding UTF8 .gitignore
+*.ipynb
+app1.py
