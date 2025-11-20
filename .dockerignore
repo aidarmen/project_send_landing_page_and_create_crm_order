@@ -18,3 +18,6 @@ pytest_cache/
 *.xlsx
 *.xls
 *.csv
+.ipynb_checkpoints/
+*.ipynb
+app1.py

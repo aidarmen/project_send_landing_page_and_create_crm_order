@@ -33,6 +33,13 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div class="grid md:grid-cols-2 gap-8 items-center">
         <div data-aos="fade-right">
+          <!-- Logo/Image at the top -->
+          <div class="mb-6">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" 
+                 alt="Company Logo" 
+                 class="h-12 md:h-16 w-auto object-contain"
+                 onerror="this.style.display='none'">
+          </div>
           <h1 class="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">{{ offer.title }}</h1>
           {% if offer.price %}
             <p class="text-lg/8 text-white/90 mb-4">
@@ -44,14 +51,21 @@
           </p>
         </div>
         <div data-aos="fade-left" class="md:justify-self-end">
-          <div class="rounded-xl bg-white/10 p-6">
-            <div class="grid grid-cols-3 gap-6">
-              <i data-feather="wifi"></i>
-              <i data-feather="smartphone"></i>
-              <i data-feather="tv"></i>
-              <i data-feather="phone"></i>
-              <i data-feather="cpu"></i>
-              <i data-feather="film"></i>
+          <!-- Promotional Image -->
+          <div class="mb-6 rounded-xl overflow-hidden shadow-2xl">
+            <img src="{{ url_for('static', filename='images/promotional.jpg') }}" 
+                 alt="Special Offer" 
+                 class="w-full h-auto object-cover"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="rounded-xl bg-white/10 p-6" style="display:none;">
+              <div class="grid grid-cols-3 gap-6">
+                <i data-feather="wifi"></i>
+                <i data-feather="smartphone"></i>
+                <i data-feather="tv"></i>
+                <i data-feather="phone"></i>
+                <i data-feather="cpu"></i>
+                <i data-feather="film"></i>
+              </div>
             </div>
           </div>
         </div>

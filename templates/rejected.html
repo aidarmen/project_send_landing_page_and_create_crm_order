@@ -10,6 +10,13 @@
 <body class="bg-gray-50 text-gray-900">
   <div class="min-h-screen flex items-center justify-center p-6">
     <div class="max-w-xl w-full bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+      <!-- Rejection Image -->
+      <div class="mb-4">
+        <img src="{{ url_for('static', filename='images/rejected.png') }}" 
+             alt="Rejected" 
+             class="mx-auto h-20 w-20 object-contain"
+             onerror="this.style.display='none';">
+      </div>
       <div class="mx-auto h-14 w-14 rounded-full bg-red-50 flex items-center justify-center">
         <i data-feather="x" class="text-red-600"></i>
       </div>
