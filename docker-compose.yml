@@ -9,7 +9,7 @@ services:
       ORDER_API_URL: "http://10.8.219.66:8501"
       TOKEN_MAX_AGE_SECONDS: 2592000
       DB_PATH: /app/data/app.db
-      BASE_URL: "https://offer.datasetcore.com"  # <-- important for link generation
+      BASE_URL: "https://b2c2.telecom.kz"  # <-- important for link generation
       TZ: Asia/Almaty
     volumes:
       - ./data:/app/data            # SQLite & any persisted files
