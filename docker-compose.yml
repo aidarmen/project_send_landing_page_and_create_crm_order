@@ -9,6 +9,7 @@ services:
     environment:
       TZ: Asia/Almaty
       ORDER_API_URL: ${ORDER_API_URL}
+      BASE_URL: ${BASE_URL}
     volumes:
       - ./data:/app/data            # SQLite & any persisted files
       - ./uploads:/app/uploads      # if you save user files/uploads
