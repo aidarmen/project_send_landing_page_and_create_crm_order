@@ -26,10 +26,11 @@ RUN adduser --disabled-password --gecos '' appuser && \
 USER appuser
 
 # Defaults (override in compose/.env as needed)
+# ORDER_API_URL must be provided via environment variables
 ENV FLASK_ENV=production \
-    ORDER_API_URL=http://10.8.219.66:8501 \
     TOKEN_MAX_AGE_SECONDS=2592000 \
     DB_PATH=/app/data/app.db \
+    BASE_URL=http://localhost:5000 \
     TZ=Asia/Almaty
 
 EXPOSE 5000

@@ -27,7 +27,7 @@
 
   <div class="col-md-3">
     <label class="form-label">Валюта</label>
-    <input class="form-control" name="currency" value="{{ (row and row['currency']) or 'KZT' }}">
+    <input class="form-control" name="currency" value="{{ ((row and row['currency']) or '₸')|replace('KZT', '₸') }}">
   </div>
 
   <div class="col-12"><hr></div>
@@ -166,33 +166,100 @@
 
   <div class="col-12"><hr></div>
 
-  <!-- Связка с Order API -->
-  <div class="col-12"><strong>Связка с Order API</strong></div>
-  <div class="col-md-3">
+  <!-- Конфигурация элементов заказа (CUST_ORDER_ITEMS) -->
+  <div class="col-12"><strong>Конфигурация элементов заказа (CUST_ORDER_ITEMS)</strong></div>
+  <div class="col-md-3 mb-3">
     <label class="form-label">PRODUCT_OFFER_ID</label>
-    <input class="form-control" name="product_offer_id" value="{{ row and row['product_offer_id'] }}">
+    <input class="form-control" type="number" name="product_offer_id" value="{{ row and row['product_offer_id'] }}">
   </div>
-  <div class="col-md-3">
-    <label class="form-label">PRODUCT_OFFER_STRUCT_ID</label>
-    <input class="form-control" name="product_offer_struct_id" value="{{ row and row['product_offer_struct_id'] }}">
+  <div class="col-12 mb-3">
+    <button type="button" class="btn btn-sm btn-success" id="add-order-item-btn">Добавить элемент заказа</button>
   </div>
-  <div class="col-md-3">
-    <label class="form-label">PO_STRUCT_ELEMENT_ID</label>
-    <input class="form-control" name="po_struct_element_id" value="{{ row and row['po_struct_element_id'] }}">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">PRODUCT_NUM</label>
-    <input class="form-control" name="product_num" value="{{ row and row['product_num'] }}">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">RESOURCE_SPEC_ID</label>
-    <input class="form-control" name="resource_spec_id" value="{{ row and row['resource_spec_id'] }}">
+  <div id="cust-order-items-container" class="col-12">
+    {% if cust_order_items %}
+      {% for item in cust_order_items %}
+        {% set item_idx = loop.index0 %}
+        <div class="card mb-3 order-item" data-item-index="{{ item_idx }}">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Элемент заказа #{{ loop.index }}</strong>
+            <button type="button" class="btn btn-sm btn-danger remove-order-item">Удалить</button>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">EXTERNAL_ID</label>
+                <input class="form-control" name="cust_order_items[{{ item_idx }}][external_id]" value="{{ item.get('external_id', '') }}">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">ORDER_NUM</label>
+                <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][order_num]" value="{{ item.get('order_num', '') }}">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">PO_COMPONENT_ID</label>
+                <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][po_component_id]" value="{{ item.get('po_component_id', '') }}">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">PRODUCT_OFFER_STRUCT_ID</label>
+                <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][product_offer_struct_id]" value="{{ item.get('product_offer_struct_id', '') }}">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">SERVICE_COUNT</label>
+                <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][service_count]" value="{{ item.get('service_count', '') }}">
+              </div>
+            </div>
+            <div class="mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>PO_STRUCT_ELEMENTS</strong>
+                <button type="button" class="btn btn-sm btn-secondary add-element-btn">Добавить элемент</button>
+              </div>
+              <div class="elements-container">
+                {% if item.get('po_struct_elements') %}
+                  {% for element in item.get('po_struct_elements', []) %}
+                    {% set elem_idx = loop.index0 %}
+                    <div class="row g-2 mb-2 element-row" data-element-index="{{ elem_idx }}">
+                      <div class="col-md-4">
+                        <label class="form-label">PO_STRUCT_ELEMENT_ID</label>
+                        <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][po_struct_elements][{{ elem_idx }}][po_struct_element_id]" value="{{ element.get('po_struct_element_id', '') }}">
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label">SERVICE_COUNT</label>
+                        <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][po_struct_elements][{{ elem_idx }}][service_count]" value="{{ element.get('service_count', '') }}">
+                      </div>
+                      <div class="col-md-3 d-flex align-items-end">
+                        <button type="button" class="btn btn-sm btn-danger remove-element-btn">Удалить элемент</button>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
   </div>
 
   <div class="col-12">
     <button class="btn btn-primary">Сохранить</button>
   </div>
 </form>
+
+{% if debug_messages %}
+<div class="col-12 mt-3">
+  <div class="card">
+    <div class="card-header bg-info text-white">
+      <strong>Debug Information</strong>
+    </div>
+    <div class="card-body">
+      <ul class="mb-0">
+        {% for msg in debug_messages %}
+          <li class="{% if 'WARNING' in msg or 'Skipped' in msg %}text-warning{% else %}text-info{% endif %}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 <script>
   // показать/скрыть секции по чекбоксам
@@ -203,5 +270,152 @@
       if (block) block.classList.toggle("d-none", !cb.checked);
     });
   });
+
+  // CUST_ORDER_ITEMS dynamic management
+  const container = document.getElementById('cust-order-items-container');
+  if (!container) {
+    console.error('Container #cust-order-items-container not found');
+  }
+  let itemCounter = container ? container.querySelectorAll('.order-item').length : 0;
+
+  function reindexItems() {
+    const items = container.querySelectorAll('.order-item');
+    items.forEach((item, idx) => {
+      item.setAttribute('data-item-index', idx);
+      item.querySelector('.card-header strong').textContent = `Элемент заказа #${idx + 1}`;
+      
+      // Update all input names
+      item.querySelectorAll('input[name*="cust_order_items["]').forEach(input => {
+        const name = input.getAttribute('name');
+        const newName = name.replace(/cust_order_items\[\d+\]/, `cust_order_items[${idx}]`);
+        input.setAttribute('name', newName);
+      });
+      
+      // Reindex elements within this item
+      const elementsContainer = item.querySelector('.elements-container');
+      if (elementsContainer) {
+        const elements = elementsContainer.querySelectorAll('.element-row');
+        elements.forEach((elem, elemIdx) => {
+          elem.setAttribute('data-element-index', elemIdx);
+          elem.querySelectorAll('input').forEach(input => {
+            const name = input.getAttribute('name');
+            // Replace po_struct_elements[ANY_NUMBER] with po_struct_elements[elemIdx]
+            // Pattern: cust_order_items[itemIdx][po_struct_elements][oldIdx][field]
+            const newName = name.replace(/cust_order_items\[\d+\]\[po_struct_elements\]\[\d+\]/, `cust_order_items[${idx}][po_struct_elements][${elemIdx}]`);
+            input.setAttribute('name', newName);
+          });
+        });
+      }
+    });
+    itemCounter = items.length;
+  }
+
+  // Add new order item
+  document.getElementById('add-order-item-btn')?.addEventListener('click', () => {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = 'card mb-3 order-item';
+    itemDiv.setAttribute('data-item-index', itemCounter);
+    itemDiv.innerHTML = `
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>Элемент заказа #${itemCounter + 1}</strong>
+        <button type="button" class="btn btn-sm btn-danger remove-order-item">Удалить</button>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">EXTERNAL_ID</label>
+            <input class="form-control" name="cust_order_items[${itemCounter}][external_id]" value="">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">ORDER_NUM</label>
+            <input class="form-control" type="number" name="cust_order_items[${itemCounter}][order_num]" value="">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">PO_COMPONENT_ID</label>
+            <input class="form-control" type="number" name="cust_order_items[${itemCounter}][po_component_id]" value="">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">PRODUCT_OFFER_STRUCT_ID</label>
+            <input class="form-control" type="number" name="cust_order_items[${itemCounter}][product_offer_struct_id]" value="">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">SERVICE_COUNT</label>
+            <input class="form-control" type="number" name="cust_order_items[${itemCounter}][service_count]" value="">
+          </div>
+        </div>
+        <div class="mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <strong>PO_STRUCT_ELEMENTS</strong>
+            <button type="button" class="btn btn-sm btn-secondary add-element-btn">Добавить элемент</button>
+          </div>
+          <div class="elements-container"></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(itemDiv);
+    itemCounter++;
+    attachItemEventListeners(itemDiv);
+  });
+
+  // Remove order item
+  container.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-order-item')) {
+      e.target.closest('.order-item').remove();
+      reindexItems();
+    }
+  });
+
+  // Add element to an item
+  container.addEventListener('click', (e) => {
+    const addBtn = e.target.closest('.add-element-btn');
+    if (addBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const item = addBtn.closest('.order-item');
+      if (!item) return;
+      const itemIdx = item.getAttribute('data-item-index');
+      const elementsContainer = item.querySelector('.elements-container');
+      if (!elementsContainer) return;
+      const elemCount = elementsContainer.querySelectorAll('.element-row').length;
+      
+      const elemDiv = document.createElement('div');
+      elemDiv.className = 'row g-2 mb-2 element-row';
+      elemDiv.setAttribute('data-element-index', elemCount);
+      elemDiv.innerHTML = `
+        <div class="col-md-4">
+          <label class="form-label">PO_STRUCT_ELEMENT_ID</label>
+          <input class="form-control" type="number" name="cust_order_items[${itemIdx}][po_struct_elements][${elemCount}][po_struct_element_id]" value="">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">SERVICE_COUNT</label>
+          <input class="form-control" type="number" name="cust_order_items[${itemIdx}][po_struct_elements][${elemCount}][service_count]" value="">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-danger remove-element-btn">Удалить элемент</button>
+        </div>
+      `;
+      elementsContainer.appendChild(elemDiv);
+      // Reindex elements after adding
+      reindexItems();
+    }
+  });
+
+  // Remove element from an item
+  container.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('.remove-element-btn');
+    if (removeBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const elementRow = removeBtn.closest('.element-row');
+      if (elementRow) {
+        elementRow.remove();
+        reindexItems();
+      }
+    }
+  });
+
+  function attachItemEventListeners(item) {
+    // Event listeners are attached via container delegation, so this is just for future use
+  }
 </script>
 {% endblock %}

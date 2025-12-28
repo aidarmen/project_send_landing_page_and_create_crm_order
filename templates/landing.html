@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>{{ offer.title }} — Подключение</title>
+  <meta name="description" content="Подключение тарифа — {{ offer.title }}. Быстрое согласие онлайн.">
+  <link rel="icon" href="/static/favicon.ico">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ offer.title }} — Подключение">
+  <meta property="og:description" content="Подключение тарифа — {{ offer.title }}. Быстрое согласие онлайн.">
+  <meta property="og:url" content="{{ request.url }}">
+  <meta name="twitter:card" content="summary">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -15,7 +22,7 @@
   <nav class="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <i data-feather="layers" class="text-blue-700"></i>
+        <img src="/static/images/logo.png" alt="Logo" class="h-8 w-auto">
         <span class="font-bold">Онлайн-подключение</span>
       </div>
       {% if offer.details.badges and offer.details.badges|length %}
@@ -29,9 +36,11 @@
   </nav>
 
   <!-- Герой -->
-  <section class="bg-gradient-to-br from-[#0055A5] to-[#003366] text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <section class="relative bg-gradient-to-br from-[#0055A5] to-[#003366] text-white overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.15;"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
       <div class="grid md:grid-cols-2 gap-8 items-center">
+        <!-- Левая колонка: текст -->
         <div data-aos="fade-right">
           <h1 class="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">{{ offer.title }}</h1>
           {% if offer.price %}
@@ -43,15 +52,35 @@
             Ниже — состав пакета. Нажмите «Согласен», чтобы подтвердить подключение на условиях тарифа.
           </p>
         </div>
-        <div data-aos="fade-left" class="md:justify-self-end">
-          <div class="rounded-xl bg-white/10 p-6">
-            <div class="grid grid-cols-3 gap-6">
-              <i data-feather="wifi"></i>
-              <i data-feather="smartphone"></i>
-              <i data-feather="tv"></i>
-              <i data-feather="phone"></i>
-              <i data-feather="cpu"></i>
-              <i data-feather="film"></i>
+        
+        <!-- Правая колонка: визуальные элементы -->
+        <div class="relative flex items-center justify-center" data-aos="fade-left">
+          <div class="grid grid-cols-2 gap-6 w-full max-w-md">
+            {% set comps = offer.details.components or [] %}
+            {% set service_types = comps|map(attribute='type')|list %}
+            
+            <!-- Интернет -->
+            <div class="flex flex-col items-center justify-center {% if 'internet' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'internet' in service_types %}hover:bg-white/15{% endif %} transition-all">
+              <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="Интернет" class="w-16 h-16 mb-3 object-contain {% if 'internet' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'internet' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Интернет</span>
+            </div>
+            
+            <!-- Мобильная связь -->
+            <div class="flex flex-col items-center justify-center {% if 'mobile' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'mobile' in service_types %}hover:bg-white/15{% endif %} transition-all">
+              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="Мобильная связь" class="w-16 h-16 mb-3 object-contain {% if 'mobile' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'mobile' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Мобильная связь</span>
+            </div>
+            
+            <!-- Телевидение -->
+            <div class="flex flex-col items-center justify-center {% if 'tv' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'tv' in service_types %}hover:bg-white/15{% endif %} transition-all">
+              <img src="/static/images/TV_Service_Icon_Illustration.png" alt="Телевидение" class="w-16 h-16 mb-3 object-contain {% if 'tv' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'tv' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Телевидение</span>
+            </div>
+            
+            <!-- Домашний телефон -->
+            <div class="flex flex-col items-center justify-center {% if 'home_phone' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'home_phone' in service_types %}hover:bg-white/15{% endif %} transition-all">
+              <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="Домашний телефон" class="w-16 h-16 mb-3 object-contain {% if 'home_phone' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'home_phone' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Домашний телефон</span>
             </div>
           </div>
         </div>
@@ -60,8 +89,9 @@
   </section>
 
   <!-- Содержимое: динамические компоненты + сводка/согласие -->
-  <section class="py-12 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_380px] gap-8 items-start">
+  <section class="py-12 bg-gray-50 relative">
+    <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.8;"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_380px] gap-8 items-start">
 
       <!-- Левая колонка: что входит -->
       <div class="space-y-6">
@@ -75,15 +105,15 @@
         {% if comps and comps|length %}
           {% for c in comps %}
             <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 flex gap-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
-              <div class="shrink-0 mt-1 text-gray-600">
+              <div class="shrink-0 flex items-center justify-center w-16 h-16">
                 {% if c.type == 'internet' %}
-                  <i data-feather="wifi"></i>
+                  <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="Интернет" class="w-full h-full object-contain">
                 {% elif c.type == 'mobile' %}
-                  <i data-feather="smartphone"></i>
+                  <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="Мобильная связь" class="w-full h-full object-contain">
                 {% elif c.type == 'tv' %}
-                  <i data-feather="tv"></i>
+                  <img src="/static/images/TV_Service_Icon_Illustration.png" alt="Телевидение" class="w-full h-full object-contain">
                 {% elif c.type == 'home_phone' %}
-                  <i data-feather="phone"></i>
+                  <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="Домашний телефон" class="w-full h-full object-contain">
                 {% elif c.type == 'sim_devices' %}
                   <i data-feather="cpu"></i>
                 {% else %}
@@ -166,15 +196,15 @@
           <div class="space-y-3 text-sm">
             {% for c in comps %}
               {% if c.type == 'internet' and c.max_speed_mbps %}
-                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Домашний интернет до {{ c.max_speed_mbps }} Мбит/с</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>Домашний интернет до {{ c.max_speed_mbps }} Мбит/с</span></div>
               {% elif c.type == 'mobile' and c.data_gb %}
-                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Мобильный интернет {{ c.data_gb }} ГБ{% if c.sims %}, {{ c.sims }} SIM{% endif %}</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>Мобильный интернет {{ c.data_gb }} ГБ{% if c.sims %}, {{ c.sims }} SIM{% endif %}</span></div>
               {% elif c.type == 'tv' and c.channels %}
-                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>{{ c.channels }}+ ТВ-каналов</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ c.channels }}+ ТВ-каналов</span></div>
               {% elif c.type == 'home_phone' %}
-                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Домашний телефон в пакете</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>Домашний телефон в пакете</span></div>
               {% elif c.type == 'sim_devices' and c.data_gb %}
-                <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>SIM для устройств — {{ c.data_gb }} ГБ</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>SIM для устройств — {{ c.data_gb }} ГБ</span></div>
               {% endif %}
             {% endfor %}
           </div>
@@ -209,9 +239,10 @@
   </section>
 
   <!-- Договор / условия -->
-  <section class="py-12 bg-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="bg-gray-50 rounded-2xl p-8 border border-gray-200">
+  <section class="py-12 bg-gray-50 relative">
+    <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.8;"></div>
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-white rounded-2xl p-8 border border-gray-200">
         <h2 class="text-2xl font-bold mb-6 text-center">Условия предоставления услуг</h2>
         <div class="bg-white p-6 rounded-xl mb-6 max-h-96 overflow-y-auto border border-gray-200 text-sm leading-6">
           <ol class="list-decimal pl-5 space-y-2 text-gray-700">
@@ -226,7 +257,7 @@
             предусмотренных законом для обеспечения безопасности сети.</p>
         </div>
         <div class="flex items-center gap-2 text-xs text-gray-500">
-          <i data-feather="shield"></i>
+          <img src="/static/images/Trust_Security_Badge_Illustration.png" alt="Безопасность" class="w-5 h-5 flex-shrink-0">
           <span>Ваше согласие фиксируется в журнале (время, IP, браузер). Токен одноразовый.</span>
         </div>
       </div>

@@ -1,28 +1,73 @@
 import os, json, datetime
+import sys
+import logging, uuid
+from dotenv import load_dotenv
 import requests
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from flask import Flask, request, render_template, jsonify, abort, redirect
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from db import init_db, db, now_iso, fetch_offer_snapshot
 from admin_views import bp as admin_bp
 
 # ---------- Config ----------
-SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
-BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")
-TOKEN_MAX_AGE_SECONDS = int(os.getenv("TOKEN_MAX_AGE_SECONDS", str(7*24*3600)))
+load_dotenv()
 
-ORDER_API_URL = os.getenv(
-    "ORDER_API_URL",
-    "http://10.8.219.66:8501/rest/oapi/order/create_new"  # your test host
-)
-ORDER_API_TIMEOUT = 10
+
+class Config:
+    SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
+    BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")
+    TOKEN_MAX_AGE_SECONDS = int(os.getenv("TOKEN_MAX_AGE_SECONDS", str(7 * 24 * 3600)))
+    ORDER_API_URL = os.getenv("ORDER_API_URL", "")
+    ORDER_API_KEY = os.getenv("ORDER_API_KEY", "")
+    ORDER_API_TIMEOUT = int(os.getenv("ORDER_API_TIMEOUT", "10"))
+    DB_PATH = os.getenv("DB_PATH")  # used by db.py if provided
+
+
+def validate_config():
+    """Validate required configuration fields"""
+    errors = []
+    if not app.config.get("ORDER_API_KEY"):
+        errors.append("ORDER_API_KEY is required")
+    if not app.config.get("ORDER_API_URL"):
+        errors.append("ORDER_API_URL is required")
+    if app.config.get("SECRET_KEY") == "change-me":
+        print("WARNING: SECRET_KEY is set to default value 'change-me'")
+    if errors:
+        print("ERROR: Missing required configuration:")
+        for err in errors:
+            print(f"  - {err}")
+        print("\nPlease set the required environment variables in your .env file.")
+        print("See env.example for reference.")
+        sys.exit(1)
+
 
 app = Flask(__name__)
-app.config.update(SECRET_KEY=SECRET_KEY, BASE_URL=BASE_URL)
-signer = URLSafeTimedSerializer(SECRET_KEY)
+app.config.from_object(Config)
+signer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 app.config["SIGNER"] = signer
+
+# Validate configuration before initializing database
+validate_config()
 
 # DB init
 init_db()
+
+# ---------- Logging & Request ID ----------
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+
+from flask import g
+
+@app.before_request
+def assign_request_id():
+    rid = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    g.request_id = rid
+
+@app.after_request
+def add_request_id_hdr(resp):
+    rid = getattr(g, 'request_id', None)
+    if rid:
+        resp.headers['X-Request-ID'] = rid
+    return resp
 
 # ---------- Jinja filters ----------
 @app.template_filter("fmt_dt")
@@ -40,7 +85,7 @@ app.register_blueprint(admin_bp)
 @app.get("/l/<token>")
 def landing(token):
     try:
-        data = signer.loads(token, max_age=TOKEN_MAX_AGE_SECONDS)
+        data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
         return "Link expired.", 410
     except BadSignature:
@@ -73,7 +118,7 @@ def api_agree():
     token = request.form.get("token") or (request.json or {}).get("token")
     if not token: abort(400, "Missing token")
     try:
-        data = signer.loads(token, max_age=TOKEN_MAX_AGE_SECONDS)
+        data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
         return jsonify({"status":"expired"}), 410
     except BadSignature:
@@ -104,6 +149,9 @@ def api_agree():
         create_order_from_offer(link_id=link["id"])
     except Exception as e:
         print("Order API error:", e)
+        import traceback
+        traceback.print_exc()
+        # Error is already stored in database by create_order_from_offer
 
     return jsonify({"status":"ok", "message":"Consent recorded", "agreed_at": now})
 
@@ -112,7 +160,7 @@ def api_reject():
     token = request.form.get("token") or (request.json or {}).get("token")
     if not token: abort(400, "Missing token")
     try:
-        data = signer.loads(token, max_age=TOKEN_MAX_AGE_SECONDS)
+        data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
         return jsonify({"status":"expired"}), 410
     except BadSignature:
@@ -149,7 +197,7 @@ def agree_page():
     if not token: return render_template("decision_error.html", title="Ошибка", message="Отсутствует токен."), 400
 
     try:
-        data = signer.loads(token, max_age=TOKEN_MAX_AGE_SECONDS)
+        data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
         return render_template("decision_error.html", title="Ссылка истекла", message="Срок действия ссылки закончился."), 410
     except BadSignature:
@@ -199,6 +247,9 @@ def agree_page():
         create_order_from_offer(link_id=link["id"])
     except Exception as e:
         print("Order API error:", e)
+        import traceback
+        traceback.print_exc()
+        # Error is already stored in database by create_order_from_offer
 
     return render_template("accepted.html", offer=offer, when=now, already=False)
 
@@ -210,7 +261,7 @@ def reject_page():
     if not token: return render_template("decision_error.html", title="Ошибка", message="Отсутствует токен."), 400
 
     try:
-        data = signer.loads(token, max_age=TOKEN_MAX_AGE_SECONDS)
+        data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
         return render_template("decision_error.html", title="Ссылка истекла", message="Срок действия ссылки закончился."), 410
     except BadSignature:
@@ -259,45 +310,225 @@ def reject_page():
 
 
 # ---------- Internal: Order mapping ----------
+def _post_order(url: str, payload: dict, timeout: int, idem_key: str):
+    from flask import current_app
+    api_key = current_app.config.get("ORDER_API_KEY")
+    if not api_key:
+        raise ValueError("ORDER_API_KEY is not configured. Please set ORDER_API_KEY in your .env file.")
+    
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=0.5, min=0.5, max=4),
+        retry=retry_if_exception_type((requests.Timeout, requests.ConnectionError))
+    )
+    def _inner():
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "AUTHORIZATION": f"Bearer {api_key}",
+            "Idempotency-Key": idem_key
+        }
+        return requests.post(url, json=payload, headers=headers, timeout=timeout)
+    return _inner()
+
+
 def create_order_from_offer(link_id: int):
     with db() as conn:
         c = conn.cursor()
         c.execute("""SELECT l.*, u.filial_id, u.customer_account_id, u.id AS uid,
                             o.product_offer_id, o.product_offer_struct_id, o.po_struct_element_id,
-                            o.product_num, o.resource_spec_id
+                            o.product_num, o.resource_spec_id, o.details_json
                      FROM links l
                        JOIN users u ON u.id=l.user_id
                        JOIN offers o ON o.id=l.offer_id
                      WHERE l.id=?""", (link_id,))
         row = c.fetchone()
         if not row: return
+        
+        # Convert Row to dict for easier access
+        row_dict = dict(row)
+        
+        # Get address from link, fallback to default if not available
+        address = {"STREET_ID": 123, "HOUSE": 1, "ZIP_CODE": "050000"}
+        if row_dict.get("address_json"):
+            try:
+                stored_address = json.loads(row_dict["address_json"])
+                address.update(stored_address)
+            except (json.JSONDecodeError, TypeError):
+                pass
 
-        payload = {
-            "FILIAL_ID": row["filial_id"] or 17,
-            "CUSTOMER_ACCOUNT_ID": row["customer_account_id"],
-            "SALES_CHANNEL_ID": 1,
-            "EXTERNAL_ID": row["external_id"] or f"LNK-{link_id}",
-            "PRODUCT_OFFER_ID": row["product_offer_id"],
-            "ADDRESS": {"STREET_ID": 123, "HOUSE": 1, "ZIP_CODE": "050000"},
-            "CUST_ORDER_ITEMS": [{
-                "EXTERNAL_ID": f"{row['external_id'] or f'LNK-{link_id}'}-1",
+        base_external_id = row_dict["external_id"] or f"LNK-{link_id}"
+        action_date = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000")
+        
+        # Try to get cust_order_items from details_json
+        cust_order_items = None
+        if row_dict.get("details_json"):
+            try:
+                details = json.loads(row_dict["details_json"])
+                cust_order_items = details.get("cust_order_items")
+                print(f"DEBUG: Retrieved cust_order_items from details_json: {json.dumps(cust_order_items, indent=2, ensure_ascii=False)}")
+            except (json.JSONDecodeError, AttributeError) as e:
+                print(f"DEBUG: Error parsing details_json: {e}")
+                pass
+        
+        # Build CUST_ORDER_ITEMS
+        if cust_order_items and len(cust_order_items) > 0:
+            # Use configured cust_order_items
+            order_items = []
+            for item in cust_order_items:
+                # Replace placeholders in EXTERNAL_ID
+                external_id = item.get("external_id", "").replace("{link_external_id}", base_external_id)
+                if not external_id:
+                    external_id = f"{base_external_id}-{item.get('order_num', 1)}"
+                
+                # Build PO_STRUCT_ELEMENTS with auto-generated ACTION_DATE
+                po_elements = []
+                po_struct_elements_raw = item.get("po_struct_elements", [])
+                print(f"DEBUG: Processing item {item.get('order_num')}, po_struct_elements: {po_struct_elements_raw}")
+                for elem in po_struct_elements_raw:
+                    po_struct_element_id = elem.get("po_struct_element_id")
+                    if po_struct_element_id is not None:
+                        po_elements.append({
+                            "PO_STRUCT_ELEMENT_ID": po_struct_element_id,
+                            "ACTION_DATE": action_date,
+                            "SERVICE_COUNT": elem.get("service_count", 1)
+                        })
+                    else:
+                        print(f"DEBUG: Skipping element with None po_struct_element_id: {elem}")
+                print(f"DEBUG: Built {len(po_elements)} PO_STRUCT_ELEMENTS for item {item.get('order_num')}")
+                
+                order_item = {
+                    "EXTERNAL_ID": external_id,
+                    "ORDER_NUM": item.get("order_num", 1),
+                    "PO_COMPONENT_ID": item.get("po_component_id"),
+                    "PRODUCT_OFFER_STRUCT_ID": item.get("product_offer_struct_id"),
+                    "SERVICE_COUNT": item.get("service_count", 1),
+                    "PO_STRUCT_ELEMENTS": po_elements
+                }
+                # Only add if it has required fields
+                if order_item["PRODUCT_OFFER_STRUCT_ID"] is not None or po_elements:
+                    order_items.append(order_item)
+            
+            if order_items:
+                cust_order_items_payload = order_items
+            else:
+                # Fall back to default if no valid items
+                cust_order_items_payload = None
+        else:
+            # Fall back to default single-item structure
+            cust_order_items_payload = None
+        
+        # Use fallback if no cust_order_items configured
+        if cust_order_items_payload is None:
+            cust_order_items_payload = [{
+                "EXTERNAL_ID": f"{base_external_id}-1",
                 "ORDER_NUM": 1,
                 "PO_COMPONENT_ID": -1,
-                "PRODUCT_OFFER_STRUCT_ID": row["product_offer_struct_id"],
-                "PRODUCT_NUM": row["product_num"],
-                "RESOURCE_SPEC_ID": row["resource_spec_id"],
+                "PRODUCT_OFFER_STRUCT_ID": row_dict.get("product_offer_struct_id"),
+                "PRODUCT_NUM": row_dict.get("product_num"),
+                "RESOURCE_SPEC_ID": row_dict.get("resource_spec_id"),
                 "SERVICE_COUNT": 1,
                 "PO_STRUCT_ELEMENTS": [{
-                    "PO_STRUCT_ELEMENT_ID": row["po_struct_element_id"],
-                    "ACTION_DATE": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000"),
+                    "PO_STRUCT_ELEMENT_ID": row_dict.get("po_struct_element_id"),
+                    "ACTION_DATE": action_date,
                     "SERVICE_COUNT": 1
-                }]
+                }] if row_dict.get("po_struct_element_id") else []
             }]
+
+        payload = {
+            "FILIAL_ID": row_dict.get("filial_id") or 17,
+            "CUSTOMER_ACCOUNT_ID": row_dict.get("customer_account_id"),
+            "SALES_CHANNEL_ID": 1,
+            "EXTERNAL_ID": base_external_id,
+            "PRODUCT_OFFER_ID": row_dict.get("product_offer_id"),
+            "ADDRESS": address,
+            "CUST_ORDER_ITEMS": cust_order_items_payload
         }
-        print("Posting Order:", ORDER_API_URL)
-        r = requests.post(ORDER_API_URL, json=payload, timeout=ORDER_API_TIMEOUT)
-        print("Order response:", r.status_code, r.text)
-        r.raise_for_status()
+        from flask import current_app
+        order_api_url = current_app.config["ORDER_API_URL"]
+        order_api_timeout = current_app.config["ORDER_API_TIMEOUT"]
+        
+        print("Posting Order:", order_api_url)
+        print("Order payload:", json.dumps(payload, indent=2, ensure_ascii=False))
+        
+        # Store request data for debugging
+        request_data = {
+            "url": order_api_url,
+            "method": "POST",
+            "payload": payload,
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        
+        try:
+            r = _post_order(
+                order_api_url,
+                payload,
+                order_api_timeout,
+                idem_key=f"link-order-{link_id}"
+            )
+            print("Order response:", r.status_code, r.text)
+            
+            # Parse response JSON to check for ORDER_ID
+            response_json = None
+            try:
+                response_json = r.json()
+            except (ValueError, AttributeError):
+                pass  # Response is not JSON
+            
+            # Determine success: must have ORDER_ID with a value in the response
+            success = False
+            if response_json and isinstance(response_json, dict):
+                order_id = response_json.get("ORDER_ID")
+                # Success if ORDER_ID exists and has a truthy value
+                success = order_id is not None and order_id != "" and order_id != 0
+            elif r.status_code < 400:
+                # Fallback: if no JSON but status is OK, consider it success
+                # (though ideally we should have ORDER_ID)
+                success = True
+            
+            # Store request and response in database
+            response_data = {
+                "request": request_data,
+                "status_code": r.status_code,
+                "response_text": r.text,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "success": success
+            }
+            if response_json:
+                response_data["response_json"] = response_json
+            
+            # Store response using the existing connection
+            c.execute("UPDATE links SET order_response_json=? WHERE id=?", 
+                     (json.dumps(response_data, ensure_ascii=False), link_id))
+            conn.commit()
+            
+            r.raise_for_status()
+        except Exception as e:
+            # Store error response with request data using existing connection
+            error_data = {
+                "request": request_data,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "success": False
+            }
+            try:
+                c.execute("UPDATE links SET order_response_json=? WHERE id=?", 
+                         (json.dumps(error_data, ensure_ascii=False), link_id))
+                conn.commit()
+            except Exception as db_err:
+                print(f"Failed to store error in database: {db_err}")
+                # Try with a new connection as fallback
+                try:
+                    with db() as conn2:
+                        c2 = conn2.cursor()
+                        c2.execute("UPDATE links SET order_response_json=? WHERE id=?", 
+                                 (json.dumps(error_data, ensure_ascii=False), link_id))
+                        conn2.commit()
+                except Exception:
+                    pass  # Don't fail if we can't store the error
+            raise
 
 
 # ---------- Health ----------

@@ -10,6 +10,7 @@ venv/
 # IDE
 .vscode/
 .idea/
+.ipynb_checkpoints/
 # OS
 .DS_Store
 Thumbs.db
@@ -30,6 +31,21 @@ build/
 *.xlsx
 *.xls
 *.csv
+# Environment files with secrets (DO NOT commit!)
+.env
+.env.local
+.env.*.local
+*.env.local
+.env.production
+.env.*
+# IMPORTANT: Never commit files containing API keys, passwords, or other secrets
 '@ | Out-File -Encoding UTF8 .gitignore
 *.ipynb
 app1.py
+diagrams
+*.pdf
+*.crt
+*.key
+*.docx
+.ipynb_checkpoints/
+tests

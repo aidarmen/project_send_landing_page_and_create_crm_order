@@ -8,14 +8,11 @@
 </div>
 <div class="mt-4">
   <h4>Статусы</h4>
-  <ul>
-    {% for s in stats %}
-      <li>{{ s["status"] }}: {{ s["n"] }}</li>
-    {% endfor %}
-  </ul>
+  <div id="statusPie" style="height:320px" class="border rounded bg-white"></div>
 </div>
 <div class="mt-4">
   <h4>Недавние загрузки</h4>
+  <div id="uploadsBar" style="height:260px" class="border rounded bg-white mb-3"></div>
   <table class="table table-sm">
     <thead>
       <tr>
@@ -46,4 +43,57 @@
     </tbody>
   </table>
 </div>
+<div class="mt-4">
+  <h4>Согласия по дням (30д)</h4>
+  <div id="agreeTrend" style="height:300px" class="border rounded bg-white"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+  // Status pie
+  const pieEl = document.getElementById('statusPie');
+  if (pieEl) {
+    const pie = echarts.init(pieEl);
+    const pieData = [
+      {% for s in stats %}
+      {name: '{{ s["status"] or "UNKNOWN" }}', value: {{ s["n"] or 0 }}},
+      {% endfor %}
+    ];
+    pie.setOption({
+      tooltip: { trigger: 'item' },
+      legend: { top: 'bottom' },
+      series: [{ type: 'pie', radius: ['35%','70%'], data: pieData }]
+    });
+  }
+
+  // Uploads bar
+  const upEl = document.getElementById('uploadsBar');
+  if (upEl) {
+    const up = echarts.init(upEl);
+    const labels = {{ upload_labels|tojson }};
+    const totals = {{ upload_totals|tojson }};
+    up.setOption({
+      grid: { left: 40, right: 10, top: 20, bottom: 30 },
+      tooltip: { trigger: 'axis' },
+      xAxis: { type: 'category', data: labels },
+      yAxis: { type: 'value' },
+      series: [{ name: 'links', type: 'bar', data: totals }]
+    });
+  }
+
+  // Agreements trend
+  const trEl = document.getElementById('agreeTrend');
+  if (trEl) {
+    const tr = echarts.init(trEl);
+    const x = {{ agree_dates|tojson }};
+    const y = {{ agree_counts|tojson }};
+    tr.setOption({
+      grid: { left: 40, right: 10, top: 20, bottom: 30 },
+      tooltip: { trigger: 'axis' },
+      xAxis: { type: 'category', data: x },
+      yAxis: { type: 'value' },
+      series: [{ type: 'line', areaStyle: {}, data: y }]
+    });
+  }
+</script>
 {% endblock %}

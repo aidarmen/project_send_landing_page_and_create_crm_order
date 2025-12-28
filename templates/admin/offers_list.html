@@ -26,7 +26,7 @@
       <td>{{ bundle_labels.get(r["bundle"], r["bundle"]) }}</td>
       <td>
         {% if r["price"] %}
-          {{ r["price"] }} {{ r["currency"] }}
+          {{ r["price"] }} {{ (r["currency"] or "₸")|replace("KZT", "₸") }}
         {% else %}
           —
         {% endif %}

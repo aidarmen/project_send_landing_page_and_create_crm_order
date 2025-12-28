@@ -4,13 +4,11 @@ services:
     image: landing-admin:latest
     ports:
       - "127.0.0.1:5000:5000"   # bind only to loopback; Nginx will proxy
+    env_file:
+      - .env
     environment:
-      SECRET_KEY: "change-me"                 # <-- set a strong secret
-      ORDER_API_URL: "http://10.8.219.66:8501"
-      TOKEN_MAX_AGE_SECONDS: 2592000
-      DB_PATH: /app/data/app.db
-      BASE_URL: "https://offer.datasetcore.com"  # <-- important for link generation
       TZ: Asia/Almaty
+      ORDER_API_URL: ${ORDER_API_URL}
     volumes:
       - ./data:/app/data            # SQLite & any persisted files
       - ./uploads:/app/uploads      # if you save user files/uploads

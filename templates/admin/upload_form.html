@@ -9,7 +9,6 @@
   <div class="col-md-6">
     <label class="form-label">Файл (CSV или Excel)</label>
     <input class="form-control" type="file" name="file" accept=".csv,.xlsx,.xls" required>
-    <div class="form-text">Обязательный столбец: <code>customer_id</code></div>
   </div>
 
   <div class="col-md-6">
@@ -29,13 +28,30 @@
   </div>
 
   <div class="col-md-3">
-    <label class="form-label">FILIAL_ID по умолчанию (для новых пользователей)</label>
-    <input class="form-control" name="default_filial_id" type="number" value="17" required>
-  </div>
-
-  <div class="col-md-3">
     <label class="form-label">Префикс внешнего ID</label>
     <input class="form-control" name="external_prefix" value="BATCH">
+  </div>
+
+  <div class="col-12"><hr></div>
+  <div class="col-12"><strong>Адресные поля в файле</strong></div>
+  <div class="col-12">
+    <div class="alert alert-info">
+      <strong>Обязательные столбцы в файле:</strong>
+      <ul class="mb-0 mt-2">
+        <li><code>customer_account_id</code> - ID клиента</li>
+        <li><code>filial_id</code> - ID филиала (число)</li>
+        <li><code>street_id</code> - ID улицы (число)</li>
+        <li><code>house</code> - Номер дома (число)</li>
+        <li><code>zip_code</code> - Почтовый индекс (строка)</li>
+      </ul>
+      <strong class="mt-2 d-block">Опциональные столбцы:</strong>
+      <ul class="mb-0 mt-2">
+        <li><code>sub_house</code> - Подъезд/корпус (строка)</li>
+        <li><code>flat</code> - Номер квартиры (число)</li>
+        <li><code>sub_flat</code> - Дополнительная информация о квартире (строка)</li>
+      </ul>
+      <p class="mb-0 mt-2"><strong>Важно:</strong> Адрес должен быть указан для каждого пользователя в файле.</p>
+    </div>
   </div>
 
   <div class="col-12">

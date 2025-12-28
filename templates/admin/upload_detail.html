@@ -31,6 +31,9 @@
       <th>Согласие</th>
       <th>Отказ</th>
       <th>Ссылка</th>
+      <th>ORDER_ID</th>
+      <th>Payload</th>
+      <th>Ответ API</th>
     </tr>
   </thead>
   <tbody>
@@ -50,8 +53,120 @@
           <a href="{{ request.url_root.strip('/') }}/l/{{ r['token'] }}" target="_blank">Открыть</a>
         {% else %}-{% endif %}
       </td>
+      <td>
+        {% if r.get("order_id") %}
+          <strong>{{ r["order_id"] }}</strong>
+        {% else %}
+          <span class="text-muted">-</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if r.get("order_response") and r['order_response'].get('request') %}
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="togglePayload({{ r['id'] }})">
+            Показать
+          </button>
+          <div id="payload-{{ r['id'] }}" style="display:none; margin-top:10px;">
+            <div class="card">
+              <div class="card-body p-2">
+                <pre class="mb-0" style="max-height:400px; overflow:auto; font-size:10px; background:#f8f9fa; padding:8px; border-radius:4px;">{{ r['order_response']['request'].get('payload_formatted', r['order_response']['request'].get('payload')|tojson(indent=2)) }}</pre>
+              </div>
+            </div>
+          </div>
+        {% elif r.get("status") == "AGREED" %}
+          <span class="text-muted">-</span>
+        {% else %}
+          <span class="text-muted">-</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if r.get("order_response") %}
+          <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-info" onclick="toggleResponse({{ r['id'] }})">
+              Показать
+            </button>
+            {% if not r['order_response'].get('success') %}
+              <form method="post" action="{{ url_for('admin.resend_order', link_id=r['id']) }}" style="display:inline" onsubmit="return confirm('Повторно отправить заказ?');">
+                <button type="submit" class="btn btn-sm btn-warning">Повторить</button>
+              </form>
+            {% endif %}
+          </div>
+          <div id="response-{{ r['id'] }}" style="display:none; margin-top:10px;">
+            <div class="card">
+              <div class="card-body">
+                <div class="mb-3">
+                  <strong>Запрос:</strong>
+                  {% if r['order_response'].get('request') %}
+                    <div class="mt-2">
+                      <strong>URL:</strong> {{ r['order_response']['request'].get('url', 'N/A') }}<br>
+                      <strong>Метод:</strong> {{ r['order_response']['request'].get('method', 'POST') }}<br>
+                      <strong>Время запроса:</strong> {{ r['order_response']['request'].get('timestamp', 'N/A') }}<br>
+                      <strong>Payload:</strong>
+                      <pre class="bg-light p-2 mt-2" style="max-height:300px; overflow:auto; font-size:11px;">{{ r['order_response']['request'].get('payload_formatted', r['order_response']['request'].get('payload')|tojson(indent=2)) }}</pre>
+                    </div>
+                  {% else %}
+                    <span class="text-muted">Не сохранён</span>
+                  {% endif %}
+                </div>
+                <hr>
+                <div class="mb-3">
+                  <strong>Ответ:</strong>
+                  <span class="badge {% if r['order_response'].get('success') %}bg-success{% else %}bg-danger{% endif %} ms-2">
+                    {{ r['order_response'].get('status_code', 'N/A') }}
+                  </span>
+                  <br><br>
+                  <strong>Время ответа:</strong> {{ r['order_response'].get('timestamp', 'N/A') }}<br>
+                  {% if r['order_response'].get('response_json') %}
+                    <strong>Ответ (JSON):</strong>
+                    <pre class="bg-light p-2 mt-2" style="max-height:300px; overflow:auto; font-size:11px;">{{ r['order_response'].get('response_json_formatted', r['order_response']['response_json']|tojson) }}</pre>
+                  {% endif %}
+                  {% if r['order_response'].get('response_text') %}
+                    <strong>Ответ (текст):</strong>
+                    <pre class="bg-light p-2 mt-2" style="max-height:300px; overflow:auto; font-size:11px;">{{ r['order_response']['response_text'] }}</pre>
+                  {% endif %}
+                  {% if r['order_response'].get('error') %}
+                    <strong>Ошибка:</strong>
+                    <div class="alert alert-danger mt-2">
+                      <strong>{{ r['order_response'].get('error_type', 'Error') }}:</strong> {{ r['order_response']['error'] }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        {% elif r.get("status") == "AGREED" %}
+          <span class="text-warning" title="Заказ создаётся...">Ожидание...</span>
+        {% else %}
+          <span class="text-muted" title="Заказ будет создан после согласия">-</span>
+        {% endif %}
+      </td>
     </tr>
   {% endfor %}
   </tbody>
 </table>
+
+<script>
+function toggleResponse(linkId) {
+  const el = document.getElementById('response-' + linkId);
+  const btn = event.target;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = 'Скрыть';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = 'Показать';
+  }
+}
+
+function togglePayload(linkId) {
+  const el = document.getElementById('payload-' + linkId);
+  const btn = event.target;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = 'Скрыть';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = 'Показать';
+  }
+}
+</script>
 {% endblock %}

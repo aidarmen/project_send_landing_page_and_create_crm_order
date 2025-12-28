@@ -1,123 +1,238 @@
+# Landing Page & CRM Order System
 
-## created Virtual Environment
+Система для управления предложениями телекоммуникационных услуг и сбора согласий клиентов через защищённые токенизированные лендинг-страницы. Интегрируется с внешним CRM/Order API для автоматического создания заказов.
 
-```
+## Основные возможности
+
+- **Управление предложениями**: Создание и редактирование тарифных планов с детальной конфигурацией услуг
+- **Массовая загрузка клиентов**: Импорт данных из Excel/CSV с автоматической валидацией
+- **Токенизированные ссылки**: Безопасные одноразовые ссылки для каждого клиента
+- **Интеграция с CRM API**: Автоматическое создание заказов при согласии клиента
+- **Административная панель**: Полный контроль над предложениями, загрузками и статистикой
+- **Защита админ-панели**: Парольная аутентификация для доступа к административным функциям
+- **Отладка и мониторинг**: Детальная информация о запросах к API и возможность повторной отправки
+
+## Недавние изменения и улучшения
+
+### Безопасность
+- ✅ **Защита админ-панели**: Добавлена парольная аутентификация для всех маршрутов `/admin/`
+  - Переменная окружения: `ADMIN_PASSWORD`
+  - Публичные маршруты `/l/<token>` остаются доступными без авторизации
+
+### Конфигурация предложений
+- ✅ **CUST_ORDER_ITEMS**: Динамическая конфигурация элементов заказа через UI
+  - Поддержка множественных элементов заказа
+  - Вложенные `PO_STRUCT_ELEMENTS` с автоматической генерацией `ACTION_DATE`
+  - Поле `PRODUCT_OFFER_ID` добавлено в форму создания предложения
+- ✅ **Отладочная информация**: Сохранение и отображение полных запросов/ответов API
+  - Детали запроса и ответа сохраняются в базе данных
+  - Отображение на странице деталей загрузки
+  - Кнопка повторной отправки для неудачных запросов
+
+### Загрузка данных
+- ✅ **Адресные поля**: Поддержка полных адресных данных в Excel/CSV
+  - Обязательные поля: `street_id`, `house`, `zip_code`
+  - Опциональные поля: `sub_house`, `flat`, `sub_flat`
+  - Уникальные адреса для каждого пользователя
+- ✅ **Валидация данных**: Улучшенная проверка данных при загрузке
+  - Проверка обязательных колонок (`customer_account_id`, `filial_id`)
+  - Валидация типов данных и форматов
+  - Детальные сообщения об ошибках
+
+### Интеграция с API
+- ✅ **ORDER_ID**: Автоматическое извлечение и отображение `ORDER_ID` из ответа API
+  - Отображение в таблице деталей загрузки
+  - Включение в экспорт CSV
+  - Определение успешности запроса по наличию `ORDER_ID`
+- ✅ **Повторная отправка**: Кнопка для повторной отправки неудачных запросов
+  - Доступна только для неуспешных запросов
+  - Полная переотправка с теми же данными
+
+### UI/UX улучшения
+- ✅ **Лендинг-страница**: Визуальные улучшения
+  - Интеграция иллюстраций услуг (Интернет, Мобильная связь, ТВ, Телефон)
+  - Декоративный фоновый паттерн для телекоммуникационной тематики
+  - Улучшенный hero-раздел с визуальными элементами услуг
+  - Логотип в навигации и hero-секции
+- ✅ **Валюта**: Миграция с `KZT` на символ `₸`
+  - Автоматическая миграция существующих записей
+  - Поддержка в формах и отображении
+
+### Конфигурация окружения
+- ✅ **ORDER_API_URL**: Гибкая настройка через переменные окружения
+  - Удалены хардкод значения из Dockerfile
+  - Обязательная настройка через `.env` или `docker-compose.yml`
+  - Безопасное хранение конфигурации
+
+## Установка и запуск
+
+### Локальная разработка
+
+1. Создайте виртуальное окружение:
+```bash
 python -m venv venv
+.\venv\Scripts\activate  # Windows
+# или
+source venv/bin/activate  # Linux/Mac
 ```
 
-
-## Activate the Virtual Environment
-```
-.\venv\Scripts\activate
-```
-
-## Creating a requirements.txt file:
-```
-pip freeze > requirements.txt
-```
-
-## Installing packages from a requirements.txt file:
-```
+2. Установите зависимости:
+```bash
 pip install -r requirements.txt
 ```
 
-## PowerShell-native (create a user)
-```
-$body = @{
-  name = "Aruzhan"
-  phone = "+7701..."
-  email = "a@ex.kz"
-  filial_id = 17
-  customer_account_id = 700371
-} | ConvertTo-Json
+3. Настройте переменные окружения (см. раздел "Настройка окружения")
 
-Invoke-RestMethod -Method POST `
-  -Uri "http://localhost:5000/admin/user" `
-  -ContentType "application/json" `
-  -Body $body
-```
-## Create an offer (PowerShell)
-```
-$offerBody = @{
-  title  = "Home Internet 200 + TV Basic"
-  bundle = "bundle"                  # internet | fms | tv | bundle
-  price  = 6990
-  currency = "KZT"
-  details = @{ speed = "200 Mbps"; tv_channels = "120"; fms_desc = "Family Media Service promo" }
-
-  # mapping to your Order API
-  product_offer_id         = 123456
-  product_offer_struct_id  = 555
-  po_struct_element_id     = 777
-  product_num              = "ACC-001"
-  resource_spec_id         = 4444
-} | ConvertTo-Json -Depth 5
-
-$offer = Invoke-RestMethod -Method POST `
-  -Uri "http://localhost:5000/admin/offer" `
-  -ContentType "application/json" `
-  -Body $offerBody
-
-$offer
-# Expect: {"offer_id": <number>}
-```
-
-## Create a link for user_id = 2 (PowerShell)
-```
-$linkBody = @{
-  user_id    = 2
-  offer_id   = $offer.offer_id
-  external_id = "SMS-2025-0001"      # your tracking id
-  expires_days = 7                   # optional
-} | ConvertTo-Json
-
-$link = Invoke-RestMethod -Method POST `
-  -Uri "http://localhost:5000/admin/link" `
-  -ContentType "application/json" `
-  -Body $linkBody
-
-$link
-# Expect: {"link_id":..., "url":"http://localhost:5000/l/<token>", "expires_at":"..."}
-```
-## Open the customer URL (PowerShell)
-```
-Start-Process $link.url
-
-```
-
-## run project 
-```
-.\venv\Scripts\activate
+4. Запустите приложение:
+```bash
 python app.py
 ```
 
-# For running on dockerfile
+## Работа с системой
 
-1. Установка (PowerShell от имени администратора)
+### Веб-интерфейс (рекомендуется)
 
-Включите необходимые компоненты Windows (PowerShell):
-```
-dism /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-dism /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
-```
-2. Поставьте WSL 2 и базовый дистрибутив (если ещё не стоит), перезагрузитесь(PowerShell):
-```
-wsl --install -d Ubuntu
-# если уже есть WSL:
-wsl --set-default-version 2
-```
-3. Скачать Docker Desktop
+После запуска приложения откройте в браузере:
+- **Административная панель**: `http://localhost:5000/admin/` (требуется пароль из `ADMIN_PASSWORD`)
+- **Создание предложения**: `/admin/offers/new`
+- **Массовая загрузка**: `/admin/uploads/new`
 
-4. Проверка  (PowerShell)
-```
-docker version
-docker compose version
-docker info
+### Создание предложения через веб-интерфейс
+
+1. Перейдите на `/admin/offers/new`
+2. Заполните основные поля (название, тип пакета, цена, валюта)
+3. В разделе **"Конфигурация элементов заказа (CUST_ORDER_ITEMS)"**:
+   - Добавьте элементы заказа с полями: `EXTERNAL_ID`, `ORDER_NUM`, `PO_COMPONENT_ID`, `PRODUCT_OFFER_STRUCT_ID`, `SERVICE_COUNT`
+   - Для каждого элемента добавьте `PO_STRUCT_ELEMENTS` с полями: `PO_STRUCT_ELEMENT_ID`, `SERVICE_COUNT`
+   - `ACTION_DATE` генерируется автоматически
+   - Укажите `PRODUCT_OFFER_ID` в этом же разделе
+4. Сохраните предложение
+
+**Примечание:** Конфигурация `CUST_ORDER_ITEMS` сохраняется в `details_json` и используется при создании заказов через CRM API.
+
+## Настройка окружения
+
+Перед запуском проекта необходимо настроить переменные окружения:
+
+1. Скопируйте файл `env.example` в `.env`:
+   ```bash
+   copy env.example .env
+   ```
+
+2. Откройте файл `.env` и заполните обязательные переменные:
+
+   **Обязательные переменные:**
+   - `SECRET_KEY` - секретный ключ для подписи токенов (обязательно)
+   - `ORDER_API_URL` - URL CRM API (обязательно, без значения по умолчанию)
+   - `ORDER_API_KEY` - API ключ для аутентификации в CRM API (обязательно, получите у администратора API)
+   - `ADMIN_PASSWORD` - пароль для доступа к административной панели (обязательно)
+
+   **Опциональные переменные:**
+   - `ORDER_API_TIMEOUT` - таймаут запросов (по умолчанию 10 секунд)
+   - `BASE_URL` - базовый URL приложения (по умолчанию http://localhost:5000, настройте в `.env`)
+   - `DB_PATH` - путь к базе данных (по умолчанию ./app.db)
+   - `TOKEN_MAX_AGE_SECONDS` - срок действия токенов (по умолчанию 7 дней)
+
+**⚠️ ВАЖНО:** 
+- Никогда не коммитьте файл `.env` в репозиторий!
+- Файл `.env` уже добавлен в `.gitignore`
+- Используйте только placeholder значения в `env.example`
+- Реальные секреты должны храниться только в локальном файле `.env`
+
+### Тестирование CRM API
+
+Для тестирования подключения к CRM API можно использовать curl:
+
+```bash
+curl -X POST "${ORDER_API_URL}" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -H "AUTHORIZATION: Bearer YOUR_API_KEY_HERE" \
+  -H "Idempotency-Key: test-$(date +%s)" \
+  -d '{
+    "FILIAL_ID": 17,
+    "CUSTOMER_ACCOUNT_ID": 12314288,
+    "SALES_CHANNEL_ID": 1,
+    "EXTERNAL_ID": "test-1",
+    "PRODUCT_OFFER_ID": 1058536,
+    "ADDRESS": {
+      "STREET_ID": 123,
+      "HOUSE": 1,
+      "ZIP_CODE": "050000"
+    },
+    "CUST_ORDER_ITEMS": [{
+      "EXTERNAL_ID": "test-1-1",
+      "ORDER_NUM": 1,
+      "PO_COMPONENT_ID": -1,
+      "PRODUCT_OFFER_STRUCT_ID": 1058536,
+      "PRODUCT_NUM": 1,
+      "RESOURCE_SPEC_ID": 1,
+      "SERVICE_COUNT": 1,
+      "PO_STRUCT_ELEMENTS": [{
+        "PO_STRUCT_ELEMENT_ID": 1749351,
+        "ACTION_DATE": "2025-12-24T10:00:00.000",
+        "SERVICE_COUNT": 1
+      }]
+    }]
+  }'
 ```
 
-5. Запуск проекта в контейнере, В корне проекта(где Dockerfile и docker-compose.yml):
+**Примечание:** Замените `YOUR_API_KEY_HERE` на ваш реальный API ключ из файла `.env`. Убедитесь, что переменная `ORDER_API_URL` установлена в `.env`.
+
+## Формат загрузки Excel/CSV
+
+При массовой загрузке клиентов через `/admin/uploads/new` файл должен содержать следующие колонки:
+
+**Обязательные колонки:**
+- `customer_account_id` - ID аккаунта клиента (число)
+- `filial_id` - ID филиала (число)
+- `street_id` - ID улицы (число)
+- `house` - Номер дома (число)
+- `zip_code` - Почтовый индекс (число, сохраняется как строка)
+
+**Опциональные колонки:**
+- `sub_house` - Дополнительный номер дома (строка)
+- `flat` - Номер квартиры (число)
+- `sub_flat` - Дополнительный номер квартиры (строка)
+
+**Пример структуры Excel/CSV:**
 ```
+customer_account_id,filial_id,street_id,house,sub_house,flat,sub_flat,zip_code
+12319534,17,123,1,,10,,50000
+12319535,17,124,2,A,20,1,50001
+```
+
+**Примечания:**
+- Каждая строка должна содержать уникальный `customer_account_id`
+- Адресные данные уникальны для каждого пользователя
+- Пустые значения для опциональных полей можно оставить пустыми
+- `zip_code` должен быть числом (например, 50000), но сохраняется как строка
+
+## Запуск в Docker
+
+### Предварительные требования
+
+- Docker Desktop установлен и запущен
+- WSL 2 (для Windows)
+
+### Запуск
+
+1. Настройте переменные окружения в `.env` (см. раздел "Настройка окружения")
+
+2. Соберите и запустите контейнер:
+```bash
 docker compose build
 docker compose up -d
+```
+
+3. Просмотр логов:
+```bash
 docker compose logs -f web
 ```
+
+4. Остановка:
+```bash
+docker compose down
+```
+
+**Примечание:** Для Windows может потребоваться установка WSL 2. Подробности: https://docs.docker.com/desktop/wsl/

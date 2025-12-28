@@ -6,15 +6,10 @@ from contextlib import contextmanager
 # db.py
 DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "app.db"))
 
-def db():
-    conn = sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES)
-    conn.row_factory = sqlite3.Row
-    return conn
-
 
 @contextmanager
 def db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, detect_types=sqlite3.PARSE_DECLTYPES)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -83,10 +78,23 @@ def init_db():
           rejected_at TEXT,
           status TEXT DEFAULT 'NEW',    -- NEW | OPENED | AGREED | REJECTED | EXPIRED | USED
           offer_snapshot_json TEXT,
+          address_json TEXT,
           FOREIGN KEY(user_id) REFERENCES users(id),
           FOREIGN KEY(offer_id) REFERENCES offers(id),
           FOREIGN KEY(upload_id) REFERENCES bulk_uploads(id)
         )""")
+        
+        # Add address_json column if it doesn't exist (for existing databases)
+        try:
+            c.execute("ALTER TABLE links ADD COLUMN address_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        # Add order_response_json column if it doesn't exist (for existing databases)
+        try:
+            c.execute("ALTER TABLE links ADD COLUMN order_response_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
 
         # consents (audit trail)
         c.execute("""
@@ -102,18 +110,28 @@ def init_db():
         )""")
         conn.commit()
 
+        # Indexes (idempotent)
+        c.execute("CREATE INDEX IF NOT EXISTS idx_users_customer_account_id ON users(customer_account_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_links_upload_id ON links(upload_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_links_user_id ON links(user_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_links_status ON links(status)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_consents_link_id ON consents(link_id)")
+        conn.commit()
+
 def fetch_offer_snapshot(cur, offer_id: int):
     cur.execute("SELECT * FROM offers WHERE id=?", (offer_id,))
     o = cur.fetchone()
     if not o: return None
     d = dict(o)
+    details = json.loads(d["details_json"] or "{}")
     return {
         "id": d["id"],
         "title": d["title"],
         "bundle": d["bundle"],
         "price": d["price"],
         "currency": d["currency"],
-        "details": json.loads(d["details_json"] or "{}"),
+        "details": details,
+        "cust_order_items": details.get("cust_order_items", []),
         "order_mapping": {
             "product_offer_id": d["product_offer_id"],
             "product_offer_struct_id": d["product_offer_struct_id"],
