@@ -704,7 +704,7 @@ def upload_new():
                 flash(err, "warning")
             if len(errors) > 5:
                 flash(f"... and {len(errors) - 5} more rows had errors", "warning")
-        
+
         # fetch BASE_URL & signer from app config (via current_app later)
         conn.commit()
 
