@@ -183,10 +183,10 @@
           <div class="card-header d-flex justify-content-between align-items-center">
             <strong>Элемент заказа #{{ loop.index }}</strong>
             <button type="button" class="btn btn-sm btn-danger remove-order-item">Удалить</button>
-          </div>
+  </div>
           <div class="card-body">
             <div class="row g-3">
-              <div class="col-md-3">
+  <div class="col-md-3">
                 <label class="form-label">EXTERNAL_ID</label>
                 <input class="form-control" name="cust_order_items[{{ item_idx }}][external_id]" value="{{ item.get('external_id', '') }}">
               </div>
@@ -199,7 +199,7 @@
                 <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][po_component_id]" value="{{ item.get('po_component_id', '') }}">
               </div>
               <div class="col-md-2">
-                <label class="form-label">PRODUCT_OFFER_STRUCT_ID</label>
+    <label class="form-label">PRODUCT_OFFER_STRUCT_ID</label>
                 <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][product_offer_struct_id]" value="{{ item.get('product_offer_struct_id', '') }}">
               </div>
               <div class="col-md-2">
@@ -211,17 +211,17 @@
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <strong>PO_STRUCT_ELEMENTS</strong>
                 <button type="button" class="btn btn-sm btn-secondary add-element-btn">Добавить элемент</button>
-              </div>
+  </div>
               <div class="elements-container">
                 {% if item.get('po_struct_elements') %}
                   {% for element in item.get('po_struct_elements', []) %}
                     {% set elem_idx = loop.index0 %}
                     <div class="row g-2 mb-2 element-row" data-element-index="{{ elem_idx }}">
                       <div class="col-md-4">
-                        <label class="form-label">PO_STRUCT_ELEMENT_ID</label>
+    <label class="form-label">PO_STRUCT_ELEMENT_ID</label>
                         <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][po_struct_elements][{{ elem_idx }}][po_struct_element_id]" value="{{ element.get('po_struct_element_id', '') }}">
-                      </div>
-                      <div class="col-md-3">
+  </div>
+  <div class="col-md-3">
                         <label class="form-label">SERVICE_COUNT</label>
                         <input class="form-control" type="number" name="cust_order_items[{{ item_idx }}][po_struct_elements][{{ elem_idx }}][service_count]" value="{{ element.get('service_count', '') }}">
                       </div>
@@ -234,7 +234,7 @@
               </div>
             </div>
           </div>
-        </div>
+  </div>
       {% endfor %}
     {% endif %}
   </div>

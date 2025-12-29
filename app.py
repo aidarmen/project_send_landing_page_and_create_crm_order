@@ -336,7 +336,7 @@ def _post_order(url: str, payload: dict, timeout: int, idem_key: str):
 def create_order_from_offer(link_id: int):
     with db() as conn:
         c = conn.cursor()
-        c.execute("""SELECT l.*, u.filial_id, u.customer_account_id, u.id AS uid,
+        c.execute("""SELECT l.*, u.filial_id, u.customer_account_id, u.phone, u.id AS uid,
                             o.product_offer_id, o.product_offer_struct_id, o.po_struct_element_id,
                             o.product_num, o.resource_spec_id, o.details_json
                      FROM links l
@@ -445,6 +445,15 @@ def create_order_from_offer(link_id: int):
             "ADDRESS": address,
             "CUST_ORDER_ITEMS": cust_order_items_payload
         }
+        
+        # Add ORDER_CONTACT_PHONE if phone is available
+        phone = row_dict.get("phone")
+        if phone:
+            # Remove .0 suffix if phone was stored as float (e.g., "77089244226.0" -> "77089244226")
+            phone_str = str(phone).strip()
+            if phone_str.endswith('.0'):
+                phone_str = phone_str[:-2]
+            payload["ORDER_CONTACT_PHONE"] = phone_str
         from flask import current_app
         order_api_url = current_app.config["ORDER_API_URL"]
         order_api_timeout = current_app.config["ORDER_API_TIMEOUT"]

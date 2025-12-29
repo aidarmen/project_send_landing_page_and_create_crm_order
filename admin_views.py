@@ -7,7 +7,8 @@ from itsdangerous import URLSafeTimedSerializer
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
-def link_url(base_url, token):
+def link_url(base_url, token, phone=None):
+    """Generate link URL"""
     return f"{base_url}/l/{token}"
 
 def create_token(signer: URLSafeTimedSerializer, link_id: int) -> str:
@@ -348,6 +349,19 @@ def offer_save():
                        f.get("product_offer_id") or None, f.get("product_offer_struct_id") or None,
                        f.get("po_struct_element_id") or None, f.get("product_num") or None,
                        f.get("resource_spec_id") or None, f["id"]))
+            
+            # Automatically update snapshots for active links (NEW/OPENED status)
+            offer_id = int(f["id"])
+            snap = fetch_offer_snapshot(c, offer_id)
+            if snap:
+                c.execute("""UPDATE links 
+                             SET offer_snapshot_json = ?
+                             WHERE offer_id = ? AND status IN ('NEW', 'OPENED')""",
+                          (json.dumps(snap, ensure_ascii=False), offer_id))
+                updated_count = c.rowcount
+                if updated_count > 0:
+                    debug_messages.append(f"✅ Автоматически обновлено {updated_count} активных ссылок (NEW/OPENED) с новым заголовком и данными предложения")
+            
             conn.commit()
             # Store debug messages in session for display on the form
             session['offer_save_debug'] = debug_messages
@@ -633,18 +647,32 @@ def upload_new():
             if address.get("SUB_FLAT") is None:
                 address.pop("SUB_FLAT", None)
             
+            # Get phone from Excel file (if available)
+            phone = None
+            if "phone" in df.columns:
+                phone_val = row_data.get("phone")
+                if pd.notna(phone_val) and phone_val != "":
+                    # Remove .0 suffix if phone was stored as float (e.g., 77089244226.0 -> 77089244226)
+                    phone_str = str(phone_val).strip()
+                    if phone_str.endswith('.0'):
+                        phone_str = phone_str[:-2]
+                    phone = phone_str
+            
             # find or create user by customer_account_id
-            c.execute("SELECT id, filial_id FROM users WHERE customer_account_id=?", (customer_account_id,))
+            c.execute("SELECT id, filial_id, phone FROM users WHERE customer_account_id=?", (customer_account_id,))
             u = c.fetchone()
             if u:
                 user_id = u["id"]
                 # Update filial_id if it has changed
                 if u["filial_id"] != filial_id:
                     c.execute("UPDATE users SET filial_id=? WHERE id=?", (filial_id, user_id))
+                # Update phone if provided and different
+                if phone and u["phone"] != phone:
+                    c.execute("UPDATE users SET phone=? WHERE id=?", (phone, user_id))
             else:
                 c.execute("""INSERT INTO users (name, phone, email, filial_id, customer_account_id)
                              VALUES (?, ?, ?, ?, ?)""",
-                          (None, None, None, filial_id, customer_account_id))
+                          (None, phone, None, filial_id, customer_account_id))
                 user_id = c.lastrowid
 
             # insert link row (token to be added after we know link_id)
@@ -694,7 +722,7 @@ def upload_detail(upload_id):
         if not batch: abort(404)
 
         c.execute("""
-          SELECT l.*, u.customer_account_id, l.order_response_json
+          SELECT l.*, u.customer_account_id, u.phone, l.order_response_json
           FROM links l JOIN users u ON u.id=l.user_id
           WHERE l.upload_id=? ORDER BY l.id ASC
         """, (upload_id,))
@@ -731,6 +759,14 @@ def upload_detail(upload_id):
             else:
                 row_dict["order_response"] = None
                 row_dict["order_id"] = None
+            
+            # Generate URL
+            if row_dict.get("token"):
+                base_url = request.url_root.strip("/")
+                row_dict["link_url"] = link_url(base_url, row_dict["token"])
+            else:
+                row_dict["link_url"] = None
+            
             rows_list.append(row_dict)
         rows = rows_list
     return render_template("admin/upload_detail.html", batch=batch, rows=rows)
@@ -742,7 +778,7 @@ def upload_download_csv(upload_id):
         c = conn.cursor()
         c.execute("""
           SELECT l.id, u.customer_account_id, l.external_id, l.created_at, l.expires_at, l.status,
-                 l.opened_at, l.agreed_at, l.rejected_at, l.token, l.order_response_json
+                 l.opened_at, l.agreed_at, l.rejected_at, l.token, u.phone, l.order_response_json
           FROM links l JOIN users u ON u.id=l.user_id
           WHERE l.upload_id=?
           ORDER BY l.id
@@ -764,7 +800,7 @@ def upload_download_csv(upload_id):
         
         url = ""
         if r_dict.get("token"):
-            url = f"{base_url}/l/{r_dict['token']}"
+            url = link_url(base_url, r_dict['token'])
         
         # Extract ORDER_ID from order_response_json
         order_id = ""
@@ -876,60 +912,4 @@ def resend_order(link_id):
     
     return redirect(url_for("admin.upload_detail", upload_id=upload_id))
 
-@bp.post("/links/<int:link_id>/update_token")
-def update_link_token(link_id):
-    """Обновить токен ссылки"""
-    from flask import current_app
-    
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"status": "error", "message": "Invalid request"}), 400
-        
-        generate = data.get("generate", False)
-        new_token = data.get("token", "").strip()
-        
-        with db() as conn:
-            c = conn.cursor()
-            
-            # Проверяем, что ссылка существует
-            c.execute("SELECT id, token FROM links WHERE id=?", (link_id,))
-            link = c.fetchone()
-            if not link:
-                return jsonify({"status": "error", "message": "Link not found"}), 404
-            
-            # Если нужно сгенерировать новый токен
-            if generate:
-                from flask import current_app
-                signer = current_app.config.get("SIGNER")
-                if not signer:
-                    # Создаем signer если его нет
-                    signer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
-                
-                new_token = signer.dumps({"lid": link_id})
-            
-            # Если токен указан вручную
-            elif new_token:
-                # Проверяем уникальность токена (если он не совпадает с текущим)
-                if new_token != link["token"]:
-                    c.execute("SELECT id FROM links WHERE token=? AND id!=?", (new_token, link_id))
-                    if c.fetchone():
-                        return jsonify({"status": "error", "message": "Token already exists"}), 400
-            else:
-                return jsonify({"status": "error", "message": "Token is required"}), 400
-            
-            # Обновляем токен
-            c.execute("UPDATE links SET token=? WHERE id=?", (new_token, link_id))
-            conn.commit()
-        
-        return jsonify({
-            "status": "success",
-            "message": "Token updated successfully",
-            "token": new_token
-        })
-    
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        return jsonify({"status": "error", "message": str(e)}), 500
 
