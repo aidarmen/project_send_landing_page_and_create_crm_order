@@ -1,6 +1,6 @@
 import os, io, csv, json, datetime
 import pandas as pd
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, abort, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, abort, session, jsonify
 from dateutil import parser as dateparser
 from db import db, now_iso, fetch_offer_snapshot
 from itsdangerous import URLSafeTimedSerializer
@@ -418,7 +418,23 @@ def upload_new():
     filename = file.filename
     try:
         if filename.lower().endswith(".csv"):
-            df = pd.read_csv(file)
+            # Read file content to handle encoding detection
+            file.seek(0)
+            file_content = file.read()
+            
+            # Try UTF-8 first, then Windows-1251 if it fails
+            try:
+                # Try to decode as UTF-8
+                content_str = file_content.decode('utf-8')
+                df = pd.read_csv(io.StringIO(content_str))
+            except (UnicodeDecodeError, UnicodeError):
+                try:
+                    # Try Windows-1251 encoding
+                    content_str = file_content.decode('windows-1251')
+                    df = pd.read_csv(io.StringIO(content_str))
+                except Exception as e:
+                    flash(f"Failed to parse CSV file. Tried UTF-8 and Windows-1251. Error: {e}", "danger")
+                    return redirect(url_for("admin.upload_form"))
         else:
             df = pd.read_excel(file)
     except Exception as e:
@@ -788,6 +804,35 @@ def upload_assign_tokens(upload_id):
     flash(f"Assigned tokens to {assigned} rows.", "success")
     return redirect(url_for("admin.upload_detail", upload_id=upload_id))
 
+# Update offer snapshot for all active links of an offer (to update price/other fields)
+@bp.post("/offers/<int:offer_id>/update_snapshots")
+def update_offer_snapshots(offer_id):
+    """Update offer_snapshot_json for all active links (NEW/OPENED status) of a specific offer"""
+    with db() as conn:
+        c = conn.cursor()
+        # Check if offer exists
+        c.execute("SELECT id FROM offers WHERE id=?", (offer_id,))
+        if not c.fetchone():
+            flash("Offer not found", "danger")
+            return redirect(url_for("admin.offers_list"))
+        
+        # Fetch new snapshot
+        snap = fetch_offer_snapshot(c, offer_id)
+        if not snap:
+            flash("Failed to fetch offer snapshot", "danger")
+            return redirect(url_for("admin.offers_list"))
+        
+        # Update all links with status NEW or OPENED (not yet agreed/rejected)
+        c.execute("""UPDATE links 
+                     SET offer_snapshot_json = ?
+                     WHERE offer_id = ? AND status IN ('NEW', 'OPENED')""",
+                  (json.dumps(snap, ensure_ascii=False), offer_id))
+        updated = c.rowcount
+        conn.commit()
+    
+    flash(f"Updated offer snapshot for {updated} active link(s). Links with status AGREED/REJECTED were not changed.", "success")
+    return redirect(url_for("admin.offer_edit", oid=offer_id))
+
 # Resend order API request for a specific link
 @bp.post("/links/<int:link_id>/resend_order")
 def resend_order(link_id):
@@ -830,4 +875,61 @@ def resend_order(link_id):
         traceback.print_exc()
     
     return redirect(url_for("admin.upload_detail", upload_id=upload_id))
+
+@bp.post("/links/<int:link_id>/update_token")
+def update_link_token(link_id):
+    """Обновить токен ссылки"""
+    from flask import current_app
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "Invalid request"}), 400
+        
+        generate = data.get("generate", False)
+        new_token = data.get("token", "").strip()
+        
+        with db() as conn:
+            c = conn.cursor()
+            
+            # Проверяем, что ссылка существует
+            c.execute("SELECT id, token FROM links WHERE id=?", (link_id,))
+            link = c.fetchone()
+            if not link:
+                return jsonify({"status": "error", "message": "Link not found"}), 404
+            
+            # Если нужно сгенерировать новый токен
+            if generate:
+                from flask import current_app
+                signer = current_app.config.get("SIGNER")
+                if not signer:
+                    # Создаем signer если его нет
+                    signer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+                
+                new_token = signer.dumps({"lid": link_id})
+            
+            # Если токен указан вручную
+            elif new_token:
+                # Проверяем уникальность токена (если он не совпадает с текущим)
+                if new_token != link["token"]:
+                    c.execute("SELECT id FROM links WHERE token=? AND id!=?", (new_token, link_id))
+                    if c.fetchone():
+                        return jsonify({"status": "error", "message": "Token already exists"}), 400
+            else:
+                return jsonify({"status": "error", "message": "Token is required"}), 400
+            
+            # Обновляем токен
+            c.execute("UPDATE links SET token=? WHERE id=?", (new_token, link_id))
+            conn.commit()
+        
+        return jsonify({
+            "status": "success",
+            "message": "Token updated successfully",
+            "token": new_token
+        })
+    
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
 

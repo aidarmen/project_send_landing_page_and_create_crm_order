@@ -241,6 +241,11 @@
 
   <div class="col-12">
     <button class="btn btn-primary">Сохранить</button>
+    {% if row %}
+    <form method="post" action="{{ url_for('admin.update_offer_snapshots', offer_id=row['id']) }}" style="display: inline;" onsubmit="return confirm('Обновить цену и другие данные для всех активных ссылок (NEW/OPENED)? Ссылки со статусом AGREED/REJECTED не будут изменены.');">
+      <button type="submit" class="btn btn-warning">Обновить цену в отправленных ссылках</button>
+    </form>
+    {% endif %}
   </div>
 </form>
 
