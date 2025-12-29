@@ -8,9 +8,30 @@ set -e  # Остановить при ошибке
 echo "=== Безопасное обновление на сервере ==="
 echo ""
 
-# Перейти в директорию проекта
-cd ~/projects/project_send_landing_page_and_create_crm_order || { 
+# Определить директорию проекта
+# Если скрипт запущен из директории проекта, используем текущую директорию
+# Иначе пробуем стандартные пути
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR=""
+
+# Проверяем, запущен ли скрипт из директории проекта
+if [ -f "$SCRIPT_DIR/docker-compose.yml" ] && [ -f "$SCRIPT_DIR/app.py" ]; then
+    PROJECT_DIR="$SCRIPT_DIR"
+elif [ -f "./docker-compose.yml" ] && [ -f "./app.py" ]; then
+    PROJECT_DIR="$(pwd)"
+elif [ -d "$HOME/projects/project_send_landing_page_and_create_crm_order" ]; then
+    PROJECT_DIR="$HOME/projects/project_send_landing_page_and_create_crm_order"
+elif [ -d "/home/admin_c2o/projects/project_send_landing_page_and_create_crm_order" ]; then
+    PROJECT_DIR="/home/admin_c2o/projects/project_send_landing_page_and_create_crm_order"
+else
     echo "❌ Ошибка: Директория проекта не найдена."
+    echo "   Пожалуйста, запустите скрипт из директории проекта или укажите путь."
+    exit 1
+fi
+
+# Перейти в директорию проекта
+cd "$PROJECT_DIR" || { 
+    echo "❌ Ошибка: Не удалось перейти в директорию проекта: $PROJECT_DIR"
     exit 1
 }
 
