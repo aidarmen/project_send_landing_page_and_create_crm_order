@@ -412,6 +412,47 @@ def uploads_list():
         rows = c.fetchall()
     return render_template("admin/uploads_list.html", rows=rows)
 
+@bp.post("/uploads/<int:upload_id>/delete")
+def upload_delete(upload_id):
+    """Delete an upload batch and all associated links"""
+    with db() as conn:
+        c = conn.cursor()
+        
+        # Проверить, существует ли загрузка
+        c.execute("SELECT id, filename FROM bulk_uploads WHERE id=?", (upload_id,))
+        upload = c.fetchone()
+        if not upload:
+            flash("Загрузка не найдена", "danger")
+            return redirect(url_for("admin.uploads_list"))
+        
+        # Подсчитать количество связанных ссылок
+        c.execute("SELECT COUNT(*) FROM links WHERE upload_id=?", (upload_id,))
+        links_count = c.fetchone()[0]
+        
+        # Получить ID всех ссылок для удаления связанных consents
+        c.execute("SELECT id FROM links WHERE upload_id=?", (upload_id,))
+        link_ids = [row[0] for row in c.fetchall()]
+        
+        # Удалить связанные consents
+        if link_ids:
+            placeholders = ','.join('?' * len(link_ids))
+            c.execute(f"DELETE FROM consents WHERE link_id IN ({placeholders})", link_ids)
+            deleted_consents = c.rowcount
+        else:
+            deleted_consents = 0
+        
+        # Удалить все связанные ссылки
+        c.execute("DELETE FROM links WHERE upload_id=?", (upload_id,))
+        deleted_links = c.rowcount
+        
+        # Удалить саму загрузку
+        c.execute("DELETE FROM bulk_uploads WHERE id=?", (upload_id,))
+        conn.commit()
+        
+        flash(f"Загрузка '{upload['filename']}' удалена. Удалено {deleted_links} ссылок и {deleted_consents} согласий.", "info")
+    
+    return redirect(url_for("admin.uploads_list"))
+
 @bp.get("/uploads/new")
 def upload_form():
     with db() as conn:
