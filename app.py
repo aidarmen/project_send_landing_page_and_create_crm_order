@@ -373,7 +373,7 @@ def create_order_from_offer(link_id: int):
                      WHERE l.id=?""", (link_id,))
         row = c.fetchone()
         if not row: return
-        
+
         # Convert Row to dict for easier access
         row_dict = dict(row)
         
@@ -499,9 +499,9 @@ def create_order_from_offer(link_id: int):
         
         try:
             r = _post_order(
-                order_api_url,
+                    order_api_url,
                 payload,
-                order_api_timeout,
+                    order_api_timeout,
                 idem_key=f"link-order-{link_id}"
             )
             print("Order response:", r.status_code, r.text)

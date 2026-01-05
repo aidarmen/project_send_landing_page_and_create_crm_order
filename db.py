@@ -4,7 +4,13 @@ from contextlib import contextmanager
 # DB_PATH = "app.db"
 
 # db.py
-DB_PATH = os.getenv("DB_PATH", os.path.join(os.path.dirname(__file__), "app.db"))
+# Default to /app/data/app.db (persistent volume) if DB_PATH not set
+# This ensures data persists across container rebuilds
+_default_db_path = os.path.join(os.path.dirname(__file__), "..", "data", "app.db")
+# If running in container, use /app/data/app.db
+if os.path.exists("/app/data"):
+    _default_db_path = "/app/data/app.db"
+DB_PATH = os.getenv("DB_PATH", _default_db_path)
 
 
 @contextmanager

@@ -40,12 +40,85 @@ echo ""
 
 # 1. Создать backup базы данных (на всякий случай)
 echo "💾 Создание backup базы данных..."
+BACKUP_CREATED=false
+BACKUP_FILE=""
+
+# Проверить и создать backup из ./data/app.db (основная база)
 if [ -f "./data/app.db" ]; then
     BACKUP_FILE="./data/app.db.backup.$(date +%Y%m%d_%H%M%S)"
     cp ./data/app.db "$BACKUP_FILE"
-    echo "✅ Backup создан: $BACKUP_FILE"
-else
-    echo "⚠️  База данных не найдена, пропускаем backup"
+    echo "✅ Backup создан из ./data/app.db: $BACKUP_FILE"
+    BACKUP_CREATED=true
+    
+    # Проверить содержимое backup
+    USERS_COUNT=$(sudo docker compose exec -T web python3 -c "
+import sqlite3
+try:
+    conn = sqlite3.connect('/app/data/app.db')
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM users')
+    count = c.fetchone()[0]
+    print(count)
+    conn.close()
+except:
+    print('0')
+" 2>/dev/null || echo "0")
+    
+    if [ "$USERS_COUNT" -gt 0 ]; then
+        echo "   ✓ Backup содержит $USERS_COUNT пользователей"
+    else
+        echo "   ⚠️  Backup пустой или не содержит пользователей"
+    fi
+fi
+
+# Проверить, есть ли база данных в /app/app.db внутри контейнера
+echo ""
+echo "🔍 Проверка дополнительных баз данных в контейнере..."
+ROOT_DB_EXISTS=$(sudo docker compose exec -T web test -f /app/app.db && echo "yes" || echo "no" 2>/dev/null)
+
+if [ "$ROOT_DB_EXISTS" = "yes" ]; then
+    echo "   Найдена база данных в /app/app.db"
+    
+    # Проверить содержимое
+    ROOT_USERS=$(sudo docker compose exec -T web python3 -c "
+import sqlite3
+try:
+    conn = sqlite3.connect('/app/app.db')
+    c = conn.cursor()
+    c.execute('SELECT COUNT(*) FROM users')
+    count = c.fetchone()[0]
+    print(count)
+    conn.close()
+except:
+    print('0')
+" 2>/dev/null || echo "0")
+    
+    if [ "$ROOT_USERS" -gt 0 ]; then
+        echo "   ✓ /app/app.db содержит $ROOT_USERS пользователей"
+        
+        # Создать backup из /app/app.db
+        ROOT_BACKUP_NAME="app.db.backup.from_root.$(date +%Y%m%d_%H%M%S)"
+        ROOT_BACKUP="./data/$ROOT_BACKUP_NAME"
+        sudo docker compose exec -T web cp /app/app.db "/app/data/$ROOT_BACKUP_NAME"
+        echo "   ✅ Backup создан из /app/app.db: $ROOT_BACKUP"
+        
+        # Если основная база пустая или содержит меньше данных, скопировать из /app/app.db
+        if [ "$USERS_COUNT" -eq 0 ] || [ "$ROOT_USERS" -gt "$USERS_COUNT" ]; then
+            echo ""
+            echo "⚠️  Обнаружено: /app/app.db содержит больше данных!"
+            echo "   Копирую данные из /app/app.db в /app/data/app.db..."
+            sudo docker compose exec -T web cp /app/app.db /app/data/app.db
+            sudo chown admin_c2o:admin_c2o ./data/app.db 2>/dev/null || true
+            sudo chmod 644 ./data/app.db 2>/dev/null || true
+            echo "   ✅ Данные скопированы"
+        fi
+    else
+        echo "   ⚠️  /app/app.db пустая"
+    fi
+fi
+
+if [ "$BACKUP_CREATED" = false ] && [ "$ROOT_DB_EXISTS" = "no" ]; then
+    echo "⚠️  База данных не найдена ни в ./data/app.db, ни в /app/app.db"
 fi
 echo ""
 
@@ -67,6 +140,10 @@ echo ""
 # 5. Перезапустить контейнер (это НЕ удалит volumes)
 echo "🔄 Перезапуск контейнера..."
 sudo docker compose up -d web
+
+# Подождать, пока контейнер запустится
+echo "   Ожидание запуска контейнера..."
+sleep 5
 echo ""
 
 # 6. Проверить статус контейнера
@@ -83,6 +160,67 @@ echo "✅ Обновление завершено!"
 echo ""
 echo "⚠️  Важно:"
 echo "   - База данных сохранена в ./data/app.db"
-echo "   - Backup создан в: $BACKUP_FILE (если база существовала)"
+if [ -n "$BACKUP_FILE" ]; then
+    echo "   - Backup создан: $BACKUP_FILE"
+fi
 echo "   - Если что-то пошло не так, можно восстановить из backup"
+echo ""
+echo "📝 Проверка финального состояния базы данных:"
+FINAL_CHECK=$(sudo docker compose exec -T web python3 -c "
+import sys
+sys.path.insert(0, '/app')
+import sqlite3
+import os
+
+# Проверить, какой путь использует приложение
+try:
+    from db import DB_PATH
+    print(f'✅ Приложение использует: {DB_PATH}')
+except Exception as e:
+    print(f'⚠️ Ошибка импорта db: {e}')
+    DB_PATH = '/app/data/app.db'
+    print(f'   Используется путь по умолчанию: {DB_PATH}')
+
+# Проверить, существует ли база
+if os.path.exists(DB_PATH):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM users')
+        users = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM links')
+        links = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM offers')
+        offers = c.fetchone()[0]
+        print(f'✅ Данные: Users={users}, Links={links}, Offers={offers}')
+        conn.close()
+    except Exception as e:
+        print(f'❌ Ошибка чтения базы: {e}')
+else:
+    print(f'❌ База данных не найдена по пути: {DB_PATH}')
+    
+    # Проверить альтернативные пути
+    alt_paths = ['/app/data/app.db', '/app/app.db']
+    found_alt = False
+    for alt_path in alt_paths:
+        if os.path.exists(alt_path):
+            print(f'⚠️ Найдена база в альтернативном месте: {alt_path}')
+            try:
+                conn = sqlite3.connect(alt_path)
+                c = conn.cursor()
+                c.execute('SELECT COUNT(*) FROM users')
+                users = c.fetchone()[0]
+                c.execute('SELECT COUNT(*) FROM links')
+                links = c.fetchone()[0]
+                print(f'   Users: {users}, Links: {links}')
+                conn.close()
+                found_alt = True
+            except Exception as e:
+                print(f'   Ошибка чтения: {e}')
+    
+    if not found_alt:
+        print('❌ База данных не найдена ни в одном из мест')
+" 2>/dev/null || echo "Ошибка при проверке")
+echo "$FINAL_CHECK"
+echo ""
 

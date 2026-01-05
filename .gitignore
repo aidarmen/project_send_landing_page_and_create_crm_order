@@ -50,3 +50,5 @@ diagrams
 .ipynb_checkpoints/
 tests
 ./data
+add_prefix_to_phone.py
+add_urls_to_excel.py
