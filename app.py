@@ -78,8 +78,36 @@ def fmt_dt(iso):
     except:
         return iso
 
+@app.template_filter("force_https")
+def force_https(url):
+    """Force HTTPS in URLs (except for localhost)"""
+    if not url:
+        return url
+    url_str = str(url)
+    # Force HTTPS unless it's localhost
+    if url_str.startswith("http://") and not url_str.startswith("http://localhost") and not url_str.startswith("http://127.0.0.1"):
+        return url_str.replace("http://", "https://", 1)
+    return url_str
+
 # ---------- Admin ----------
 app.register_blueprint(admin_bp)
+
+# ---------- Root redirect ----------
+@app.get("/")
+def root_redirect():
+    """Redirect root path from b2c2.telecom.kz to telecom.kz"""
+    # Only redirect exact root path "/" (not /admin/ or /l/<token>)
+    # Flask will handle /admin/ and /l/<token> before this route
+    path = request.path
+    if path != "/":
+        return "Not found", 404
+    
+    # Only redirect if accessed via b2c2.telecom.kz
+    host = request.host
+    if host and "b2c2.telecom.kz" in host:
+        return redirect("https://telecom.kz", code=301)
+    # Otherwise, return a simple response
+    return "Not found", 404
 
 # ---------- Public Landing (Agree/Reject) ----------
 @app.get("/l/<token>")

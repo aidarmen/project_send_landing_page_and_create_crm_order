@@ -9,7 +9,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="{{ offer.title }} — Подключение">
   <meta property="og:description" content="Подключение тарифа — {{ offer.title }}. Быстрое согласие онлайн.">
-  <meta property="og:url" content="{{ request.url }}">
+  <meta property="og:url" content="{{ request.url | force_https }}">
   <meta name="twitter:card" content="summary">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">

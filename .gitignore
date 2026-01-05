@@ -49,3 +49,4 @@ diagrams
 *.docx
 .ipynb_checkpoints/
 tests
+./data

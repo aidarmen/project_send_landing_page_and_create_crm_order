@@ -1,6 +1,6 @@
 import os, io, csv, json, datetime
 import pandas as pd
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, abort, session, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, abort, session, jsonify, current_app
 from dateutil import parser as dateparser
 from db import db, now_iso, fetch_offer_snapshot
 from itsdangerous import URLSafeTimedSerializer
@@ -8,7 +8,14 @@ from itsdangerous import URLSafeTimedSerializer
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 def link_url(base_url, token, phone=None):
-    """Generate link URL"""
+    """Generate link URL with HTTPS enforced (except for localhost)"""
+    # Remove trailing slash if present
+    base_url = base_url.rstrip("/")
+    
+    # Force HTTPS unless it's localhost
+    if base_url.startswith("http://") and not base_url.startswith("http://localhost") and not base_url.startswith("http://127.0.0.1"):
+        base_url = base_url.replace("http://", "https://", 1)
+    
     return f"{base_url}/l/{token}"
 
 def create_token(signer: URLSafeTimedSerializer, link_id: int) -> str:
@@ -762,7 +769,12 @@ def upload_detail(upload_id):
             
             # Generate URL
             if row_dict.get("token"):
-                base_url = request.url_root.strip("/")
+                # Use BASE_URL from config if available, otherwise fall back to request.url_root
+                try:
+                    base_url = current_app.config.get("BASE_URL", request.url_root.strip("/"))
+                except RuntimeError:
+                    # Outside of application context, use request.url_root
+                    base_url = request.url_root.strip("/")
                 row_dict["link_url"] = link_url(base_url, row_dict["token"])
             else:
                 row_dict["link_url"] = None
@@ -793,7 +805,13 @@ def upload_download_csv(upload_id):
     w.writerow(["link_id","customer_account_id","external_id","created_at","expires_at",
                 "status","opened_at","agreed_at","rejected_at","order_id","url"])
 
-    base_url = request.url_root.strip("/")
+    # Use BASE_URL from config if available, otherwise fall back to request.url_root
+    try:
+        base_url = current_app.config.get("BASE_URL", request.url_root.strip("/"))
+    except RuntimeError:
+        # Outside of application context, use request.url_root
+        base_url = request.url_root.strip("/")
+    
     for r in rows:
         # Convert Row to dict for easier access
         r_dict = dict(r)
