@@ -812,7 +812,14 @@ def upload_detail(upload_id):
             if row_dict.get("token"):
                 # Use BASE_URL from config if available, otherwise fall back to request.url_root
                 try:
-                    base_url = current_app.config.get("BASE_URL", request.url_root.strip("/"))
+                    base_url = current_app.config.get("BASE_URL")
+                    # If BASE_URL is not set or is the default localhost, try to use request.url_root
+                    if not base_url or base_url == "http://localhost:5000":
+                        base_url = request.url_root.strip("/")
+                    # If still localhost and we're not in development, log a warning
+                    if base_url.startswith("http://localhost") and current_app.config.get("FLASK_ENV") != "development":
+                        import logging
+                        logging.warning(f"BASE_URL is set to localhost ({base_url}). Please set BASE_URL environment variable.")
                 except RuntimeError:
                     # Outside of application context, use request.url_root
                     base_url = request.url_root.strip("/")
@@ -848,7 +855,14 @@ def upload_download_csv(upload_id):
 
     # Use BASE_URL from config if available, otherwise fall back to request.url_root
     try:
-        base_url = current_app.config.get("BASE_URL", request.url_root.strip("/"))
+        base_url = current_app.config.get("BASE_URL")
+        # If BASE_URL is not set or is the default localhost, try to use request.url_root
+        if not base_url or base_url == "http://localhost:5000":
+            base_url = request.url_root.strip("/")
+        # If still localhost and we're not in development, log a warning
+        if base_url.startswith("http://localhost") and current_app.config.get("FLASK_ENV") != "development":
+            import logging
+            logging.warning(f"BASE_URL is set to localhost ({base_url}). Please set BASE_URL environment variable.")
     except RuntimeError:
         # Outside of application context, use request.url_root
         base_url = request.url_root.strip("/")

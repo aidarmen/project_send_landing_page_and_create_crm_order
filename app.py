@@ -15,7 +15,9 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
-    BASE_URL = os.getenv("BASE_URL", "http://localhost:5000")
+    # BASE_URL: use environment variable, but if empty or not set, use localhost default
+    _base_url = os.getenv("BASE_URL", "").strip()
+    BASE_URL = _base_url if _base_url else "http://localhost:5000"
     TOKEN_MAX_AGE_SECONDS = int(os.getenv("TOKEN_MAX_AGE_SECONDS", str(7 * 24 * 3600)))
     ORDER_API_URL = os.getenv("ORDER_API_URL", "")
     ORDER_API_KEY = os.getenv("ORDER_API_KEY", "")
@@ -32,6 +34,11 @@ def validate_config():
         errors.append("ORDER_API_URL is required")
     if app.config.get("SECRET_KEY") == "change-me":
         print("WARNING: SECRET_KEY is set to default value 'change-me'")
+    base_url = app.config.get("BASE_URL", "")
+    if not base_url or base_url == "http://localhost:5000":
+        print("WARNING: BASE_URL is set to default 'http://localhost:5000'")
+        print("  This will cause generated links to use localhost instead of your production domain.")
+        print("  Please set BASE_URL environment variable in your .env file or Docker environment.")
     if errors:
         print("ERROR: Missing required configuration:")
         for err in errors:
@@ -45,6 +52,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 signer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 app.config["SIGNER"] = signer
+
+# Log BASE_URL for debugging
+logging.info(f"BASE_URL configured as: {app.config.get('BASE_URL')}")
 
 # Validate configuration before initializing database
 validate_config()
