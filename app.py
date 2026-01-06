@@ -4,7 +4,7 @@ import logging, uuid
 from dotenv import load_dotenv
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from flask import Flask, request, render_template, jsonify, abort, redirect
+from flask import Flask, request, render_template, jsonify, abort, redirect, url_for
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from db import init_db, db, now_iso, fetch_offer_snapshot
 from admin_views import bp as admin_bp
@@ -105,19 +105,11 @@ app.register_blueprint(admin_bp)
 # ---------- Root redirect ----------
 @app.get("/")
 def root_redirect():
-    """Redirect root path from b2c2.telecom.kz to telecom.kz"""
-    # Only redirect exact root path "/" (not /admin/ or /l/<token>)
-    # Flask will handle /admin/ and /l/<token> before this route
-    path = request.path
-    if path != "/":
-        return "Not found", 404
-    
-    # Only redirect if accessed via b2c2.telecom.kz
-    host = request.host
-    if host and "b2c2.telecom.kz" in host:
-        return redirect("https://telecom.kz", code=301)
-    # Otherwise, return a simple response
-    return "Not found", 404
+    """Redirect root path to admin panel"""
+    # Server-side redirect from / to /admin/ is already configured
+    # This is a fallback in case server redirect doesn't work
+    # Redirect to admin login page
+    return redirect(url_for("admin.login"), code=302)
 
 # ---------- Public Landing (Agree/Reject) ----------
 @app.get("/l/<token>")
