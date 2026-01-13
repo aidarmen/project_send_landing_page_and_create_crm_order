@@ -4,10 +4,16 @@ import logging, uuid
 from dotenv import load_dotenv
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from flask import Flask, request, render_template, jsonify, abort, redirect, url_for
+from flask import Flask, request, render_template, jsonify, abort, redirect
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from db import init_db, db, now_iso, fetch_offer_snapshot
 from admin_views import bp as admin_bp
+try:
+    from version import get_version
+    PROJECT_VERSION = get_version()
+except ImportError:
+    PROJECT_VERSION = "unknown"
+from translations import get_all_translations
 
 # ---------- Config ----------
 load_dotenv()
@@ -53,6 +59,9 @@ app.config.from_object(Config)
 signer = URLSafeTimedSerializer(app.config["SECRET_KEY"])
 app.config["SIGNER"] = signer
 
+# ---------- Logging & Request ID ----------
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+
 # Log BASE_URL for debugging
 logging.info(f"BASE_URL configured as: {app.config.get('BASE_URL')}")
 
@@ -62,8 +71,13 @@ validate_config()
 # DB init
 init_db()
 
-# ---------- Logging & Request ID ----------
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+# Log version on startup
+logging.info(f"Starting application version: {PROJECT_VERSION}")
+
+# Make version available to all templates
+@app.context_processor
+def inject_version():
+    return dict(version=PROJECT_VERSION)
 
 from flask import g
 
@@ -102,14 +116,31 @@ def force_https(url):
 # ---------- Admin ----------
 app.register_blueprint(admin_bp)
 
+# ---------- Version API ----------
+@app.get("/api/version")
+def api_version():
+    """API endpoint to get current application version"""
+    return jsonify({
+        "version": PROJECT_VERSION,
+        "status": "ok"
+    })
+
 # ---------- Root redirect ----------
 @app.get("/")
 def root_redirect():
-    """Redirect root path to admin panel"""
-    # Server-side redirect from / to /admin/ is already configured
-    # This is a fallback in case server redirect doesn't work
-    # Redirect to admin login page
-    return redirect(url_for("admin.login"), code=302)
+    """Redirect root path from b2c2.telecom.kz to telecom.kz"""
+    # Only redirect exact root path "/" (not /admin/ or /l/<token>)
+    # Flask will handle /admin/ and /l/<token> before this route
+    path = request.path
+    if path != "/":
+        return "Not found", 404
+    
+    # Only redirect if accessed via b2c2.telecom.kz
+    host = request.host
+    if host and "b2c2.telecom.kz" in host:
+        return redirect("https://telecom.kz", code=301)
+    # Otherwise, return a simple response
+    return "Not found", 404
 
 # ---------- Public Landing (Agree/Reject) ----------
 @app.get("/l/<token>")
@@ -121,9 +152,23 @@ def landing(token):
     except BadSignature:
         return "Invalid link.", 400
 
+    # Language detection: URL parameter > cookie > default (ru)
+    lang = request.args.get("lang", "").lower()
+    if lang not in ("ru", "kk"):
+        lang = request.cookies.get("landing_lang", "ru")
+        if lang not in ("ru", "kk"):
+            lang = "ru"
+    
+    # Flag to set cookie if language was changed via URL parameter
+    set_lang_cookie = request.args.get("lang") and request.args.get("lang").lower() in ("ru", "kk")
+
     with db() as conn:
         c = conn.cursor()
-        c.execute("SELECT * FROM links WHERE id=?", (data["lid"],))
+        # Fetch link with user data
+        c.execute("""SELECT l.*, u.customer_account_id 
+                     FROM links l 
+                     JOIN users u ON u.id = l.user_id 
+                     WHERE l.id=?""", (data["lid"],))
         link = c.fetchone()
         if not link: return "Not found.", 404
 
@@ -141,7 +186,89 @@ def landing(token):
             conn.commit()
 
         offer = json.loads(link["offer_snapshot_json"])
-        return render_template("landing.html", offer=offer, token=token, link_id=link["id"])
+        
+        # Apply translations to offer if available
+        if offer.get("details") and offer["details"].get("translations"):
+            translations_data = offer["details"]["translations"]
+            
+            # For Kazakh language, use Russian as fallback
+            if lang == "kk":
+                # Get Russian translations as fallback
+                ru_translations = translations_data.get("ru", {})
+                kk_translations = translations_data.get("kk", {})
+                
+                # Override title: use Kazakh if available, otherwise Russian, otherwise keep original
+                if "title" in kk_translations:
+                    offer["title"] = kk_translations["title"]
+                elif "title" in ru_translations:
+                    offer["title"] = ru_translations["title"]
+                
+                # Override badges: use Kazakh if available, otherwise Russian
+                if "badges" in kk_translations:
+                    offer["details"]["badges"] = kk_translations["badges"]
+                elif "badges" in ru_translations:
+                    offer["details"]["badges"] = ru_translations["badges"]
+                
+                # Override component titles: use Kazakh if available, otherwise Russian
+                if offer["details"].get("components"):
+                    kk_components = kk_translations.get("components", [])
+                    ru_components = ru_translations.get("components", [])
+                    
+                    # Create lookup dictionaries for faster access
+                    kk_comp_map = {c.get("type"): c for c in kk_components if c.get("type")}
+                    ru_comp_map = {c.get("type"): c for c in ru_components if c.get("type")}
+                    
+                    for comp in offer["details"]["components"]:
+                        comp_type = comp.get("type")
+                        if comp_type:
+                            # Try Kazakh first, then Russian
+                            if comp_type in kk_comp_map and "title" in kk_comp_map[comp_type]:
+                                comp["title"] = kk_comp_map[comp_type]["title"]
+                            elif comp_type in ru_comp_map and "title" in ru_comp_map[comp_type]:
+                                comp["title"] = ru_comp_map[comp_type]["title"]
+            elif lang == "ru" and "ru" in translations_data:
+                # For Russian, use Russian translations directly
+                ru_translations = translations_data["ru"]
+                if "title" in ru_translations:
+                    offer["title"] = ru_translations["title"]
+                if "badges" in ru_translations:
+                    offer["details"]["badges"] = ru_translations["badges"]
+                if "components" in ru_translations and offer["details"].get("components"):
+                    ru_components = ru_translations["components"]
+                    ru_comp_map = {c.get("type"): c for c in ru_components if c.get("type")}
+                    for comp in offer["details"]["components"]:
+                        comp_type = comp.get("type")
+                        if comp_type and comp_type in ru_comp_map and "title" in ru_comp_map[comp_type]:
+                            comp["title"] = ru_comp_map[comp_type]["title"]
+        
+        # Parse address from link
+        address = None
+        if link["address_json"]:
+            try:
+                address = json.loads(link["address_json"])
+            except (json.JSONDecodeError, TypeError):
+                pass
+        
+        # Get all translations for current language
+        translations = get_all_translations(lang)
+        
+        template_response = render_template("landing.html", 
+                             offer=offer, 
+                             token=token, 
+                             link_id=link["id"],
+                             customer_account_id=link["customer_account_id"],
+                             address=address,
+                             current_lang=lang,
+                             translations=translations)
+        
+        # Set cookie if language was changed via URL parameter
+        if set_lang_cookie:
+            from flask import make_response
+            response = make_response(template_response)
+            response.set_cookie("landing_lang", lang, max_age=31536000)  # 1 year
+            return response
+        
+        return template_response
 
 @app.post("/api/agree")
 def api_agree():

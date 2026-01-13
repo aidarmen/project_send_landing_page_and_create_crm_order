@@ -7,8 +7,12 @@
   {% if row %}<input type="hidden" name="id" value="{{ row['id'] }}">{% endif %}
 
   <div class="col-md-6">
-    <label class="form-label">Название</label>
+    <label class="form-label">Название (Русский)</label>
     <input class="form-control" name="title" required value="{{ row and row['title'] }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Название (Қазақша) <span class="text-muted">(опционально)</span></label>
+    <input class="form-control" name="title_kk" value="{{ details.get('translations', {}).get('kk', {}).get('title', '') }}">
   </div>
 
   <div class="col-md-3">
@@ -33,8 +37,12 @@
   <div class="col-12"><hr></div>
 
   <div class="col-md-6">
-    <label class="form-label">Бейджи (через запятую)</label>
+    <label class="form-label">Бейджи (Русский, через запятую)</label>
     <input class="form-control" name="badge_text" value="{{ badge_text }}">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">Бейджи (Қазақша, через запятую) <span class="text-muted">(опционально)</span></label>
+    <input class="form-control" name="badge_text_kk" value="{{ details.get('translations', {}).get('kk', {}).get('badges', [])|join(', ') }}">
   </div>
 
   <div class="col-12"><strong>Включить услуги в это предложение:</strong></div>
@@ -47,8 +55,12 @@
   </div>
   <div class="svc internet row g-2 {% if not internet %}d-none{% endif %}">
     <div class="col-md-6">
-      <label class="form-label">Заголовок</label>
+      <label class="form-label">Заголовок (Русский)</label>
       <input class="form-control" name="internet_title" value="{{ internet.get('title','Домашний интернет') }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Заголовок (Қазақша) <span class="text-muted">(опционально)</span></label>
+      <input class="form-control" name="internet_title_kk" value="{{ component_translations_kk.get('internet', '') }}">
     </div>
     <div class="col-md-3">
       <label class="form-label">Макс. скорость (Мбит/с)</label>
@@ -64,8 +76,12 @@
   </div>
   <div class="svc tv row g-2 {% if not tv %}d-none{% endif %}">
     <div class="col-md-6">
-      <label class="form-label">Заголовок</label>
+      <label class="form-label">Заголовок (Русский)</label>
       <input class="form-control" name="tv_title" value="{{ tv.get('title','Телевидение, фильмы и сериалы') }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Заголовок (Қазақша) <span class="text-muted">(опционально)</span></label>
+      <input class="form-control" name="tv_title_kk" value="{{ component_translations_kk.get('tv', '') }}">
     </div>
     <div class="col-md-3">
       <label class="form-label">Каналы</label>
@@ -85,8 +101,12 @@
   </div>
   <div class="svc mobile row g-2 {% if not mobile %}d-none{% endif %}">
     <div class="col-md-6">
-      <label class="form-label">Заголовок</label>
+      <label class="form-label">Заголовок (Русский)</label>
       <input class="form-control" name="mobile_title" value="{{ mobile.get('title','Мобильная связь') }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Заголовок (Қазақша) <span class="text-muted">(опционально)</span></label>
+      <input class="form-control" name="mobile_title_kk" value="{{ component_translations_kk.get('mobile', '') }}">
     </div>
     <div class="col-md-2">
       <label class="form-label">SIM-карт</label>
@@ -126,8 +146,12 @@
   </div>
   <div class="svc home_phone row g-2 {% if not phone %}d-none{% endif %}">
     <div class="col-md-6">
-      <label class="form-label">Заголовок</label>
+      <label class="form-label">Заголовок (Русский)</label>
       <input class="form-control" name="phone_title" value="{{ phone.get('title','Домашний телефон') }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Заголовок (Қазақша) <span class="text-muted">(опционально)</span></label>
+      <input class="form-control" name="phone_title_kk" value="{{ component_translations_kk.get('home_phone', '') }}">
     </div>
     <div class="col-md-3">
       <label class="form-label">Минут внутри сети</label>
@@ -147,8 +171,12 @@
   </div>
   <div class="svc sim_devices row g-2 {% if not iot %}d-none{% endif %}">
     <div class="col-md-6">
-      <label class="form-label">Заголовок</label>
+      <label class="form-label">Заголовок (Русский)</label>
       <input class="form-control" name="iot_title" value="{{ iot.get('title','SIM для устройств') }}">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Заголовок (Қазақша) <span class="text-muted">(опционально)</span></label>
+      <input class="form-control" name="iot_title_kk" value="{{ component_translations_kk.get('sim_devices', '') }}">
     </div>
     <div class="col-md-2">
       <label class="form-label">SIM-карт</label>

@@ -1,16 +1,26 @@
 import os, sqlite3, json, datetime
 from contextlib import contextmanager
+from pathlib import Path
 
 # DB_PATH = "app.db"
 
 # db.py
 # Default to /app/data/app.db (persistent volume) if DB_PATH not set
 # This ensures data persists across container rebuilds
-_default_db_path = os.path.join(os.path.dirname(__file__), "..", "data", "app.db")
 # If running in container, use /app/data/app.db
 if os.path.exists("/app/data"):
     _default_db_path = "/app/data/app.db"
+else:
+    # For local development, use data/app.db in project root
+    project_root = Path(__file__).parent
+    _default_db_path = str(project_root / "data" / "app.db")
+
 DB_PATH = os.getenv("DB_PATH", _default_db_path)
+
+# Ensure the directory for the database exists
+db_dir = os.path.dirname(DB_PATH)
+if db_dir and not os.path.exists(db_dir):
+    Path(db_dir).mkdir(parents=True, exist_ok=True)
 
 
 @contextmanager

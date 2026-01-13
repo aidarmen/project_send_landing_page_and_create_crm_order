@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ current_lang }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>{{ offer.title }} — Подключение</title>
-  <meta name="description" content="Подключение тарифа — {{ offer.title }}. Быстрое согласие онлайн.">
+  <title>{{ offer.title }} — {{ translations.online_connection }}</title>
+  <meta name="description" content="{{ translations.online_connection }} — {{ offer.title }}. {{ translations.hero_description }}">
   <link rel="icon" href="/static/favicon.ico">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="{{ offer.title }} — Подключение">
-  <meta property="og:description" content="Подключение тарифа — {{ offer.title }}. Быстрое согласие онлайн.">
+  <meta property="og:title" content="{{ offer.title }} — {{ translations.online_connection }}">
+  <meta property="og:description" content="{{ translations.online_connection }} — {{ offer.title }}. {{ translations.hero_description }}">
   <meta property="og:url" content="{{ request.url | force_https }}">
   <meta name="twitter:card" content="summary">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,15 +23,24 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="/static/images/logo.png" alt="Logo" class="h-8 w-auto">
-        <span class="font-bold">Онлайн-подключение</span>
+        <span class="font-bold">{{ translations.online_connection }}</span>
       </div>
-      {% if offer.details.badges and offer.details.badges|length %}
-        <div class="hidden md:flex items-center gap-2">
-          {% for b in offer.details.badges %}
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-600/10 text-blue-700">{{ b }}</span>
-          {% endfor %}
-        </div>
-      {% endif %}
+      <div class="flex items-center gap-4">
+        {% if offer.details.badges and offer.details.badges|length %}
+          <div class="hidden md:flex items-center gap-2">
+            {% for b in offer.details.badges %}
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-600/10 text-blue-700">{{ b }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <!-- Language Toggle Button -->
+        <button id="langToggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors">
+          <span id="langDisplay">{{ 'ҚАЗ' if current_lang == 'kk' else 'РУС' }}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -45,11 +54,11 @@
           <h1 class="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">{{ offer.title }}</h1>
           {% if offer.price %}
             <p class="text-lg/8 text-white/90 mb-4">
-              Цена: <span class="text-2xl font-extrabold">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }}</span> {{ offer.currency or '₸' }}/мес
+              {{ translations.price }}: <span class="text-2xl font-extrabold">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }}</span> {{ offer.currency or '₸' }}{{ translations.per_month }}
             </p>
           {% endif %}
           <p class="text-white/90">
-            Ниже — состав пакета. Нажмите «Согласен», чтобы подтвердить подключение на условиях тарифа.
+            {{ translations.hero_description }}
           </p>
         </div>
         
@@ -61,26 +70,26 @@
             
             <!-- Интернет -->
             <div class="flex flex-col items-center justify-center {% if 'internet' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'internet' in service_types %}hover:bg-white/15{% endif %} transition-all">
-              <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="Интернет" class="w-16 h-16 mb-3 object-contain {% if 'internet' not in service_types %}opacity-50{% endif %}">
-              <span class="text-sm font-semibold {% if 'internet' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Интернет</span>
+              <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ translations.internet }}" class="w-16 h-16 mb-3 object-contain {% if 'internet' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'internet' in service_types %}text-white/90{% else %}text-white/50{% endif %}">{{ translations.internet }}</span>
             </div>
             
             <!-- Мобильная связь -->
             <div class="flex flex-col items-center justify-center {% if 'mobile' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'mobile' in service_types %}hover:bg-white/15{% endif %} transition-all">
-              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="Мобильная связь" class="w-16 h-16 mb-3 object-contain {% if 'mobile' not in service_types %}opacity-50{% endif %}">
-              <span class="text-sm font-semibold {% if 'mobile' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Мобильная связь</span>
+              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ translations.mobile }}" class="w-16 h-16 mb-3 object-contain {% if 'mobile' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'mobile' in service_types %}text-white/90{% else %}text-white/50{% endif %}">{{ translations.mobile }}</span>
             </div>
             
             <!-- Телевидение -->
             <div class="flex flex-col items-center justify-center {% if 'tv' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'tv' in service_types %}hover:bg-white/15{% endif %} transition-all">
-              <img src="/static/images/TV_Service_Icon_Illustration.png" alt="Телевидение" class="w-16 h-16 mb-3 object-contain {% if 'tv' not in service_types %}opacity-50{% endif %}">
-              <span class="text-sm font-semibold {% if 'tv' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Телевидение</span>
+              <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ translations.tv }}" class="w-16 h-16 mb-3 object-contain {% if 'tv' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'tv' in service_types %}text-white/90{% else %}text-white/50{% endif %}">{{ translations.tv }}</span>
             </div>
             
             <!-- Домашний телефон -->
             <div class="flex flex-col items-center justify-center {% if 'home_phone' in service_types %}bg-white/10 backdrop-blur-sm border-white/20{% else %}bg-white/5 border-white/10{% endif %} rounded-2xl p-6 border {% if 'home_phone' in service_types %}hover:bg-white/15{% endif %} transition-all">
-              <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="Домашний телефон" class="w-16 h-16 mb-3 object-contain {% if 'home_phone' not in service_types %}opacity-50{% endif %}">
-              <span class="text-sm font-semibold {% if 'home_phone' in service_types %}text-white/90{% else %}text-white/50{% endif %}">Домашний телефон</span>
+              <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ translations.home_phone }}" class="w-16 h-16 mb-3 object-contain {% if 'home_phone' not in service_types %}opacity-50{% endif %}">
+              <span class="text-sm font-semibold {% if 'home_phone' in service_types %}text-white/90{% else %}text-white/50{% endif %}">{{ translations.home_phone }}</span>
             </div>
           </div>
         </div>
@@ -97,8 +106,8 @@
       <div class="space-y-6">
 
         <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6">
-          <h2 class="text-2xl font-extrabold">Что входит</h2>
-          <p class="text-gray-600">Пакет сформирован индивидуально</p>
+          <h2 class="text-2xl font-extrabold">{{ translations.what_included }}</h2>
+          <p class="text-gray-600">{{ translations.package_individual }}</p>
         </div>
 
         {% set comps = offer.details.components or [] %}
@@ -107,13 +116,13 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 flex gap-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 60 }}">
               <div class="shrink-0 flex items-center justify-center w-16 h-16">
                 {% if c.type == 'internet' %}
-                  <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="Интернет" class="w-full h-full object-contain">
+                  <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ translations.internet }}" class="w-full h-full object-contain">
                 {% elif c.type == 'mobile' %}
-                  <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="Мобильная связь" class="w-full h-full object-contain">
+                  <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ translations.mobile }}" class="w-full h-full object-contain">
                 {% elif c.type == 'tv' %}
-                  <img src="/static/images/TV_Service_Icon_Illustration.png" alt="Телевидение" class="w-full h-full object-contain">
+                  <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ translations.tv }}" class="w-full h-full object-contain">
                 {% elif c.type == 'home_phone' %}
-                  <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="Домашний телефон" class="w-full h-full object-contain">
+                  <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ translations.home_phone }}" class="w-full h-full object-contain">
                 {% elif c.type == 'sim_devices' %}
                   <i data-feather="cpu"></i>
                 {% else %}
@@ -126,50 +135,50 @@
 
                 {% if c.type == 'internet' %}
                   <p class="text-gray-700">
-                    {% if c.max_speed_mbps %}До {{ c.max_speed_mbps }} Мбит/с{% else %}Домашний интернет{% endif %}
+                    {% if c.max_speed_mbps %}{{ translations.speed_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}{% else %}{{ translations.home_internet }}{% endif %}
                   </p>
 
                 {% elif c.type == 'mobile' %}
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                    {% if c.sims %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">SIM</span><span class="font-semibold">{{ c.sims }}</span></div>{% endif %}
-                    {% if c.data_gb %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Интернет</span><span class="font-semibold">{{ c.data_gb }} ГБ</span></div>{% endif %}
-                    {% if c.after_cap_kbps %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">После лимита</span><span class="font-semibold">до {{ c.after_cap_kbps }} Кбит/с</span></div>{% endif %}
-                    {% if c.onnet_minutes is not none %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Внутри сети</span><span class="font-semibold">{{ c.onnet_minutes if c.onnet_minutes>0 else 'Безлимит' }}</span></div>{% endif %}
-                    {% if c.offnet_minutes is not none %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Другие/городские</span><span class="font-semibold">{{ c.offnet_minutes }} мин</span></div>{% endif %}
+                    {% if c.sims %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.sim }}</span><span class="font-semibold">{{ c.sims }}</span></div>{% endif %}
+                    {% if c.data_gb %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.data }}</span><span class="font-semibold">{{ c.data_gb }} {{ translations.gb }}</span></div>{% endif %}
+                    {% if c.after_cap_kbps %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.after_limit }}</span><span class="font-semibold">{{ translations.speed_up_to }} {{ c.after_cap_kbps }} {{ translations.kbps }}</span></div>{% endif %}
+                    {% if c.onnet_minutes is not none %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.within_network }}</span><span class="font-semibold">{{ c.onnet_minutes if c.onnet_minutes>0 else translations.unlimited }}</span></div>{% endif %}
+                    {% if c.offnet_minutes is not none %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.other_city }}</span><span class="font-semibold">{{ c.offnet_minutes }} {{ translations.minutes }}</span></div>{% endif %}
                     {% if c.sms %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">SMS</span><span class="font-semibold">{{ c.sms }}</span></div>{% endif %}
                   </div>
                   {% if c.tv_plus_included %}
-                    <p class="mt-2 text-sm text-blue-700">Подписка TV+ включена для каждой SIM</p>
+                    <p class="mt-2 text-sm text-blue-700">{{ translations.tv_plus_included }}</p>
                   {% endif %}
 
                 {% elif c.type == 'tv' %}
                   <ul class="list-disc pl-5 text-gray-700 space-y-1">
-                    {% if c.channels %}<li>{{ c.channels }}+ каналов</li>{% endif %}
-                    {% if c.ott and c.ott|length %}<li>Онлайн-кинотеатры: {{ c.ott|join(', ') }}</li>{% endif %}
+                    {% if c.channels %}<li>{{ c.channels }}+ {{ translations.channels }}</li>{% endif %}
+                    {% if c.ott and c.ott|length %}<li>{{ translations.online_cinemas }}: {{ c.ott|join(', ') }}</li>{% endif %}
                   </ul>
 
                 {% elif c.type == 'home_phone' %}
                   <ul class="list-disc pl-5 text-gray-700 space-y-1">
-                    {% if c.onnet_minutes is not none %}<li>{{ c.onnet_minutes if c.onnet_minutes>0 else 'Безлимит' }} мин внутри сети</li>{% endif %}
-                    {% if c.offnet_minutes is not none %}<li>{{ c.offnet_minutes }} мин на другие сети/городские</li>{% endif %}
+                    {% if c.onnet_minutes is not none %}<li>{{ c.onnet_minutes if c.onnet_minutes>0 else translations.unlimited }} {{ translations.minutes }} {{ translations.within_network }}</li>{% endif %}
+                    {% if c.offnet_minutes is not none %}<li>{{ c.offnet_minutes }} {{ translations.minutes }} {{ translations.other_city }}</li>{% endif %}
                   </ul>
 
                 {% elif c.type == 'sim_devices' %}
                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                    {% if c.sims %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">SIM</span><span class="font-semibold">{{ c.sims }}</span></div>{% endif %}
-                    {% if c.data_gb %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">Интернет</span><span class="font-semibold">{{ c.data_gb }} ГБ</span></div>{% endif %}
-                    {% if c.after_cap_kbps %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">После лимита</span><span class="font-semibold">до {{ c.after_cap_kbps }} Кбит/с</span></div>{% endif %}
+                    {% if c.sims %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.sim }}</span><span class="font-semibold">{{ c.sims }}</span></div>{% endif %}
+                    {% if c.data_gb %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.data }}</span><span class="font-semibold">{{ c.data_gb }} {{ translations.gb }}</span></div>{% endif %}
+                    {% if c.after_cap_kbps %}<div class="flex justify-between bg-gray-50 border rounded-lg p-2"><span class="text-gray-600">{{ translations.after_limit }}</span><span class="font-semibold">{{ translations.speed_up_to }} {{ c.after_cap_kbps }} {{ translations.kbps }}</span></div>{% endif %}
                   </div>
 
                 {% else %}
-                  <p class="text-gray-700">Параметры услуги указаны в договоре ниже.</p>
+                  <p class="text-gray-700">{{ translations.service_params_in_contract }}</p>
                 {% endif %}
               </div>
             </div>
           {% endfor %}
         {% else %}
           <div class="bg-white border border-gray-200 rounded-2xl p-5 md:p-6">
-            <p class="text-gray-600">Состав пакета не указан.</p>
+            <p class="text-gray-600">{{ translations.package_not_specified }}</p>
           </div>
         {% endif %}
       </div>
@@ -179,12 +188,12 @@
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm text-gray-500">Цена за месяц</p>
+              <p class="text-sm text-gray-500">{{ translations.price_per_month }}</p>
               <div class="mt-1">
                 {% if offer.price %}
                   <div class="text-3xl font-extrabold text-blue-700">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }} {{ offer.currency or '₸' }}</div>
                 {% else %}
-                  <div class="text-xl font-bold text-blue-700">Уточняется</div>
+                  <div class="text-xl font-bold text-blue-700">{{ translations.to_be_determined }}</div>
                 {% endif %}
               </div>
             </div>
@@ -192,19 +201,57 @@
 
           <hr class="my-6">
 
+          <!-- Информация о клиенте -->
+          {% if customer_account_id or address %}
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ translations.your_data }}</h3>
+              <div class="space-y-2 text-sm">
+                {% if customer_account_id %}
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600">{{ translations.account_number }}:</span>
+                    <span class="font-semibold text-gray-900">{{ customer_account_id }}</span>
+                  </div>
+                {% endif %}
+                {% if address %}
+                  <div class="mt-2">
+                    <span class="text-gray-600 block mb-1">{{ translations.address }}:</span>
+                    <div class="text-gray-900 font-medium">
+                      {% if address.TOWN_NAME %}
+                        {{ address.TOWN_NAME }}{% if address.STREET_NAME or address.HOUSE %}, {% endif %}
+                      {% endif %}
+                      {% if address.STREET_NAME %}
+                        {{ address.STREET_NAME }}{% if address.HOUSE %}, {% endif %}
+                      {% endif %}
+                      {% if address.HOUSE %}
+                        {{ translations.house }} {{ address.HOUSE }}
+                        {% if address.SUB_HOUSE %}/{{ address.SUB_HOUSE }}{% endif %}
+                      {% endif %}
+                      {% if address.FLAT %}
+                        {% if address.HOUSE %}, {% endif %}{{ translations.flat }} {{ address.FLAT }}
+                      {% endif %}
+                      {% if address.ZIP_CODE %}
+                        <br><span class="text-gray-600">{{ translations.zip_code }}: {{ address.ZIP_CODE }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
           <!-- Короткий список преимуществ из компонентов -->
           <div class="space-y-3 text-sm">
             {% for c in comps %}
               {% if c.type == 'internet' and c.max_speed_mbps %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>Домашний интернет до {{ c.max_speed_mbps }} Мбит/с</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.home_internet_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}</span></div>
               {% elif c.type == 'mobile' and c.data_gb %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>Мобильный интернет {{ c.data_gb }} ГБ{% if c.sims %}, {{ c.sims }} SIM{% endif %}</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.mobile_internet }} {{ c.data_gb }} {{ translations.gb }}{% if c.sims %}, {{ c.sims }} {{ translations.sim }}{% endif %}</span></div>
               {% elif c.type == 'tv' and c.channels %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ c.channels }}+ ТВ-каналов</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ c.channels }}+ {{ translations.tv_channels }}</span></div>
               {% elif c.type == 'home_phone' %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>Домашний телефон в пакете</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.home_phone_in_package }}</span></div>
               {% elif c.type == 'sim_devices' and c.data_gb %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>SIM для устройств — {{ c.data_gb }} ГБ</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.sim_for_devices }} — {{ c.data_gb }} {{ translations.gb }}</span></div>
               {% endif %}
             {% endfor %}
           </div>
@@ -213,25 +260,24 @@
             <input type="hidden" name="token" value="{{ token }}">
             <div class="flex items-center gap-2 mb-3">
               <input type="checkbox" id="agree" class="h-5 w-5">
-              <label for="agree" class="text-gray-700 text-sm">Я прочитал(а) условия ниже и согласен(а)</label>
+              <label for="agree" class="text-gray-700 text-sm">{{ translations.read_and_agree }}</label>
             </div>
             <button id="acceptBtn"
                     class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-extrabold text-white bg-gray-400"
                     disabled>
-              <i data-feather="check-circle"></i> Согласен
+              <i data-feather="check-circle"></i> {{ translations.agree }}
             </button>
           </form>
 
           <form method="post" action="/reject" class="mt-2">
             <input type="hidden" name="token" value="{{ token }}">
             <button class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-red-700 bg-red-50 hover:bg-red-100">
-              <i data-feather="x-circle"></i> Отказаться
+              <i data-feather="x-circle"></i> {{ translations.reject }}
             </button>
           </form>
 
           <p class="text-xs text-gray-500 mt-4">
-            Нажимая «Согласен», вы даёте согласие на подключение указанных услуг и обработку данных. Фиксируются время, IP и User-Agent.
-            Ссылка одноразовая и может истечь.
+            {{ translations.consent_notice }}
           </p>
         </div>
       </aside>
@@ -243,22 +289,21 @@
     <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.8;"></div>
     <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="bg-white rounded-2xl p-8 border border-gray-200">
-        <h2 class="text-2xl font-bold mb-6 text-center">Условия предоставления услуг</h2>
+        <h2 class="text-2xl font-bold mb-6 text-center">{{ translations.terms_title }}</h2>
         <div class="bg-white p-6 rounded-xl mb-6 max-h-96 overflow-y-auto border border-gray-200 text-sm leading-6">
           <ol class="list-decimal pl-5 space-y-2 text-gray-700">
-            <li>Услуги предоставляются на ежемесячной основе; оплата — помесячно.</li>
-            <li>Скорость «до» заявленной и может меняться в зависимости от нагрузки сети и технической возможности.</li>
-            <li>Оборудование предоставляется на период договора и подлежит возврату при расторжении.</li>
-            <li>Мы можем изменять условия с уведомлением не менее чем за 30 дней.</li>
-            <li>Применяется политика допустимого использования и правила оператора связи.</li>
+            <li>{{ translations.terms_1 }}</li>
+            <li>{{ translations.terms_2 }}</li>
+            <li>{{ translations.terms_3 }}</li>
+            <li>{{ translations.terms_4 }}</li>
+            <li>{{ translations.terms_5 }}</li>
           </ol>
-          <h3 class="font-bold mt-6 mb-2">Конфиденциальность</h3>
-          <p class="text-gray-700">Мы обрабатываем только необходимые данные, не отслеживаем контент трафика, за исключением случаев,
-            предусмотренных законом для обеспечения безопасности сети.</p>
+          <h3 class="font-bold mt-6 mb-2">{{ translations.privacy_title }}</h3>
+          <p class="text-gray-700">{{ translations.privacy_text }}</p>
         </div>
         <div class="flex items-center gap-2 text-xs text-gray-500">
           <img src="/static/images/Trust_Security_Badge_Illustration.png" alt="Безопасность" class="w-5 h-5 flex-shrink-0">
-          <span>Ваше согласие фиксируется в журнале (время, IP, браузер). Токен одноразовый.</span>
+          <span>{{ translations.security_notice }}</span>
         </div>
       </div>
     </div>
@@ -266,8 +311,8 @@
 
   <footer class="bg-gray-900 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400">
-      <p class="mb-2">© {{ (now() if false) or '2025' }} Все права защищены</p>
-      <p class="text-xs">Лицензия Nº14014826 от 09.10.2014 выдана Комитетом связи, информатизации Министерства по Инвестициям и развитию Республики Казахстан</p>
+      <p class="mb-2">© {{ (now() if false) or '2025' }} {{ translations.all_rights_reserved }}</p>
+      <p class="text-xs">{{ translations.license }}</p>
     </div>
   </footer>
 
@@ -284,6 +329,39 @@
         acceptBtn.classList.toggle('bg-gray-400', !on);
         acceptBtn.classList.toggle('bg-blue-600', on);
         acceptBtn.classList.toggle('hover:bg-blue-700', on);
+      });
+    }
+
+    // Language toggle functionality
+    function setLanguageCookie(lang) {
+      const expires = new Date();
+      expires.setFullYear(expires.getFullYear() + 1); // 1 year expiration
+      document.cookie = `landing_lang=${lang}; expires=${expires.toUTCString()}; path=/`;
+    }
+
+    function getCurrentLanguage() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'landing_lang') {
+          return value || 'ru';
+        }
+      }
+      return 'ru';
+    }
+
+    const langToggle = document.getElementById('langToggle');
+    const langDisplay = document.getElementById('langDisplay');
+    const currentLang = '{{ current_lang }}';
+
+    if (langToggle && langDisplay) {
+      langToggle.addEventListener('click', () => {
+        const newLang = currentLang === 'ru' ? 'kk' : 'ru';
+        setLanguageCookie(newLang);
+        // Reload page with new language
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', newLang);
+        window.location.href = url.toString();
       });
     }
   </script>

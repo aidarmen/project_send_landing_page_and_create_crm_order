@@ -4,6 +4,11 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from dateutil import parser as dateparser
 from db import db, now_iso, fetch_offer_snapshot
 from itsdangerous import URLSafeTimedSerializer
+try:
+    from version import get_version
+    PROJECT_VERSION = get_version()
+except ImportError:
+    PROJECT_VERSION = "unknown"
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -118,6 +123,7 @@ def dashboard():
         agree_counts=agree_counts,
         upload_labels=upload_labels,
         upload_totals=upload_totals,
+        version=PROJECT_VERSION,
     )
 
 # ---------- Offers CRUD ----------
@@ -132,7 +138,7 @@ def offers_list():
 @bp.get("/offers/new")
 def offer_new():
     # for new offer we pass empty details+comp map
-    return render_template("admin/offer_form.html", row=None, details={}, comp={}, badge_text="", cust_order_items=[])
+    return render_template("admin/offer_form.html", row=None, details={}, comp={}, badge_text="", cust_order_items=[], debug_messages=None, component_translations_kk={})
 
 @bp.get("/offers/<int:oid>/edit")
 def offer_edit(oid):
@@ -151,11 +157,19 @@ def offer_edit(oid):
         badge_text = ", ".join(details.get("badges", []))
         # extract cust_order_items
         cust_order_items = details.get("cust_order_items", [])
+        
+        # Extract component translations for easier access in template
+        component_translations_kk = {}
+        if details.get("translations") and details["translations"].get("kk") and details["translations"]["kk"].get("components"):
+            for comp_trans in details["translations"]["kk"]["components"]:
+                comp_type = comp_trans.get("type")
+                if comp_type:
+                    component_translations_kk[comp_type] = comp_trans.get("title", "")
     
     # Get debug messages from session if available
     debug_messages = session.pop('offer_save_debug', None)
     
-    return render_template("admin/offer_form.html", row=row, details=details, comp=comp_map, badge_text=badge_text, cust_order_items=cust_order_items, debug_messages=debug_messages)
+    return render_template("admin/offer_form.html", row=row, details=details, comp=comp_map, badge_text=badge_text, cust_order_items=cust_order_items, debug_messages=debug_messages, component_translations_kk=component_translations_kk)
 
 @bp.post("/offers/save")
 def offer_save():
@@ -228,7 +242,60 @@ def offer_save():
         })
 
     badges = [s.strip() for s in (f.get("badge_text") or "").split(",") if s.strip()]
+    badges_kk = [s.strip() for s in (f.get("badge_text_kk") or "").split(",") if s.strip()]
     details = { "badges": badges, "components": components }
+    
+    # Store translations for offer title, badges and components
+    translations = {}
+    title_kk = f.get("title_kk", "").strip()
+    
+    # Build component translations
+    component_translations_kk = []
+    component_translations_ru = []
+    
+    # Map component types to their title fields
+    component_title_fields = {
+        "internet": ("internet_title", "internet_title_kk"),
+        "tv": ("tv_title", "tv_title_kk"),
+        "mobile": ("mobile_title", "mobile_title_kk"),
+        "home_phone": ("phone_title", "phone_title_kk"),
+        "sim_devices": ("iot_title", "iot_title_kk")
+    }
+    
+    # Collect component translations
+    for comp in components:
+        comp_type = comp.get("type")
+        if comp_type in component_title_fields:
+            ru_title_field, kk_title_field = component_title_fields[comp_type]
+            ru_title = f.get(ru_title_field, "").strip() or comp.get("title", "")
+            kk_title = f.get(kk_title_field, "").strip()
+            
+            comp_translation_ru = {"type": comp_type, "title": ru_title}
+            component_translations_ru.append(comp_translation_ru)
+            
+            if kk_title:
+                comp_translation_kk = {"type": comp_type, "title": kk_title}
+                component_translations_kk.append(comp_translation_kk)
+    
+    # Build translations structure
+    if title_kk or badges_kk or component_translations_kk:
+        translations["ru"] = {"title": f.get("title", "")}
+        if badges:
+            translations["ru"]["badges"] = badges
+        if component_translations_ru:
+            translations["ru"]["components"] = component_translations_ru
+        
+        if title_kk or badges_kk or component_translations_kk:
+            translations["kk"] = {}
+            if title_kk:
+                translations["kk"]["title"] = title_kk
+            if badges_kk:
+                translations["kk"]["badges"] = badges_kk
+            if component_translations_kk:
+                translations["kk"]["components"] = component_translations_kk
+    
+    if translations:
+        details["translations"] = translations
 
     # Parse cust_order_items from form
     cust_order_items = []
@@ -534,15 +601,17 @@ def upload_new():
     
     # Check for required address columns in file
     address_columns = {
-        "street_id": "STREET_ID",
+        "town_name": "TOWN_NAME",
+        "street_name": "STREET_NAME",
+        "street_id": "STREET_ID",  # Keep for API compatibility
         "house": "HOUSE",
         "sub_house": "SUB_HOUSE",
         "flat": "FLAT",
         "sub_flat": "SUB_FLAT",
         "zip_code": "ZIP_CODE"
     }
-    required_address_cols = ["street_id", "house", "zip_code"]
-    optional_address_cols = ["sub_house", "flat", "sub_flat"]
+    required_address_cols = ["street_name", "house"]
+    optional_address_cols = ["town_name", "sub_house", "flat", "sub_flat", "zip_code", "street_id"]
     
     # Check if required address columns exist (case insensitive)
     df_columns_lower = [c.lower() for c in df.columns]
@@ -658,6 +727,7 @@ def upload_new():
                                 errors.append(f"Row {row_counter}: Invalid '{excel_col}' value '{val}' for customer_account_id {customer_account_id} (must be a number)")
                                 break
                         else:
+                            # For text fields: TOWN_NAME, STREET_NAME, SUB_HOUSE, SUB_FLAT
                             address[api_key] = str(val).strip() or None
                     elif excel_col in required_address_cols:
                         # Required field is missing for this row
@@ -674,26 +744,20 @@ def upload_new():
                 continue
             
             # Validate required fields are present
-            if "STREET_ID" not in address or address["STREET_ID"] is None:
-                street_val = row_data.get(column_mapping.get("street_id", "N/A"), "N/A")
-                errors.append(f"Row {row_counter}: Missing or invalid 'street_id' for customer_account_id {customer_account_id} (found value: {repr(street_val)})")
+            if "STREET_NAME" not in address or not address["STREET_NAME"]:
+                street_val = row_data.get(column_mapping.get("street_name", "N/A"), "N/A")
+                errors.append(f"Row {row_counter}: Missing or invalid 'street_name' for customer_account_id {customer_account_id} (found value: {repr(street_val)})")
                 continue
             if "HOUSE" not in address or address["HOUSE"] is None:
                 house_val = row_data.get(column_mapping.get("house", "N/A"), "N/A")
                 errors.append(f"Row {row_counter}: Missing or invalid 'house' for customer_account_id {customer_account_id} (found value: {repr(house_val)})")
                 continue
-            if "ZIP_CODE" not in address or not address["ZIP_CODE"]:
-                zip_val = row_data.get(column_mapping.get("zip_code", "N/A"), "N/A")
-                errors.append(f"Row {row_counter}: Missing or invalid 'zip_code' for customer_account_id {customer_account_id} (found value: {repr(zip_val)})")
-                continue
             
             # Clean up None values for optional fields
-            if address.get("SUB_HOUSE") is None:
-                address.pop("SUB_HOUSE", None)
-            if address.get("FLAT") is None:
-                address.pop("FLAT", None)
-            if address.get("SUB_FLAT") is None:
-                address.pop("SUB_FLAT", None)
+            optional_fields = ["SUB_HOUSE", "FLAT", "SUB_FLAT", "TOWN_NAME", "ZIP_CODE", "STREET_ID"]
+            for field in optional_fields:
+                if address.get(field) is None:
+                    address.pop(field, None)
             
             # Get phone from Excel file (if available)
             phone = None

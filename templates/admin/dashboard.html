@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Панель управления{% endblock %}
 {% block content %}
+<div class="mb-3">
+  <small class="text-muted">Версия проекта: <strong>{{ version }}</strong></small>
+</div>
 <div class="row g-3">
   <div class="col"><div class="card p-3"><b>Пользователи</b><div>{{ users }}</div></div></div>
   <div class="col"><div class="card p-3"><b>Предложения</b><div>{{ offers }}</div></div></div>
