@@ -350,15 +350,20 @@ from flask import render_template  # (already imported above in your app)
 # --------- Page: Agree (renders HTML) ----------
 @app.post("/agree")
 def agree_page():
+    # Render language for pages from cookie (fallback to ru)
+    lang = request.cookies.get("landing_lang", "ru")
+    translations = get_all_translations(lang)
+
     token = request.form.get("token") or (request.json or {}).get("token")
-    if not token: return render_template("decision_error.html", title="Ошибка", message="Отсутствует токен."), 400
+    if not token:
+        return render_template("decision_error.html", title=translations.get("decision_error_title_default","Ошибка"), message=translations.get("decision_error_message_default","Отсутствует токен."), translations=translations), 400
 
     try:
         data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
-        return render_template("decision_error.html", title="Ссылка истекла", message="Срок действия ссылки закончился."), 410
+        return render_template("decision_error.html", title=translations.get("decision_error_title_default","Ссылка истекла"), message=translations.get("decision_error_message_default","Срок действия ссылки закончился."), translations=translations), 410
     except BadSignature:
-        return render_template("decision_error.html", title="Неверная ссылка", message="Недействительный токен."), 400
+        return render_template("decision_error.html", title=translations.get("decision_error_title_default","Неверная ссылка"), message=translations.get("decision_error_message_default","Недействительный токен."), translations=translations), 400
 
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     ua = request.headers.get("User-Agent", "")
@@ -369,7 +374,7 @@ def agree_page():
         c.execute("SELECT * FROM links WHERE id=?", (data["lid"],))
         link = c.fetchone()
         if not link:
-            return render_template("decision_error.html", title="Не найдено", message="Ссылка не найдена."), 404
+            return render_template("decision_error.html", title=translations.get("decision_error_title_default","Не найдено"), message=translations.get("decision_error_message_default","Ссылка не найдена."), translations=translations), 404
 
         # expired?
         if link["expires_at"]:
@@ -377,15 +382,15 @@ def agree_page():
             if exp < datetime.datetime.now(datetime.timezone.utc):
                 c.execute("UPDATE links SET status='EXPIRED' WHERE id=?", (link["id"],))
                 conn.commit()
-                return render_template("decision_error.html", title="Ссылка истекла", message="Срок действия ссылки закончился."), 410
+                return render_template("decision_error.html", title=translations.get("decision_error_title_default","Ссылка истекла"), message=translations.get("decision_error_message_default","Срок действия ссылки закончился."), translations=translations), 410
 
         offer = json.loads(link["offer_snapshot_json"])
 
         # already final?
         if link["status"] == "REJECTED":
-            return render_template("rejected.html", offer=offer, when=link["rejected_at"], already=True)
+            return render_template("rejected.html", offer=offer, when=link["rejected_at"], already=True, translations=translations)
         if link["status"] == "AGREED":
-            return render_template("accepted.html", offer=offer, when=link["agreed_at"], already=True)
+            return render_template("accepted.html", offer=offer, when=link["agreed_at"], already=True, translations=translations)
 
         # mark opened if first time
         if not link["opened_at"]:
@@ -408,21 +413,26 @@ def agree_page():
         traceback.print_exc()
         # Error is already stored in database by create_order_from_offer
 
-    return render_template("accepted.html", offer=offer, when=now, already=False)
+    return render_template("accepted.html", offer=offer, when=now, already=False, translations=translations)
 
 
 # --------- Page: Reject (renders HTML) ----------
 @app.post("/reject")
 def reject_page():
+    # Render language for pages from cookie (fallback to ru)
+    lang = request.cookies.get("landing_lang", "ru")
+    translations = get_all_translations(lang)
+
     token = request.form.get("token") or (request.json or {}).get("token")
-    if not token: return render_template("decision_error.html", title="Ошибка", message="Отсутствует токен."), 400
+    if not token:
+        return render_template("decision_error.html", title=translations.get("decision_error_title_default","Ошибка"), message=translations.get("decision_error_message_default","Отсутствует токен."), translations=translations), 400
 
     try:
         data = signer.loads(token, max_age=app.config["TOKEN_MAX_AGE_SECONDS"])
     except SignatureExpired:
-        return render_template("decision_error.html", title="Ссылка истекла", message="Срок действия ссылки закончился."), 410
+        return render_template("decision_error.html", title=translations.get("decision_error_title_default","Ссылка истекла"), message=translations.get("decision_error_message_default","Срок действия ссылки закончился."), translations=translations), 410
     except BadSignature:
-        return render_template("decision_error.html", title="Неверная ссылка", message="Недействительный токен."), 400
+        return render_template("decision_error.html", title=translations.get("decision_error_title_default","Неверная ссылка"), message=translations.get("decision_error_message_default","Недействительный токен."), translations=translations), 400
 
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     ua = request.headers.get("User-Agent", "")
@@ -433,7 +443,7 @@ def reject_page():
         c.execute("SELECT * FROM links WHERE id=?", (data["lid"],))
         link = c.fetchone()
         if not link:
-            return render_template("decision_error.html", title="Не найдено", message="Ссылка не найдена."), 404
+            return render_template("decision_error.html", title=translations.get("decision_error_title_default","Не найдено"), message=translations.get("decision_error_message_default","Ссылка не найдена."), translations=translations), 404
 
         # expired?
         if link["expires_at"]:
@@ -441,15 +451,15 @@ def reject_page():
             if exp < datetime.datetime.now(datetime.timezone.utc):
                 c.execute("UPDATE links SET status='EXPIRED' WHERE id=?", (link["id"],))
                 conn.commit()
-                return render_template("decision_error.html", title="Ссылка истекла", message="Срок действия ссылки закончился."), 410
+                return render_template("decision_error.html", title=translations.get("decision_error_title_default","Ссылка истекла"), message=translations.get("decision_error_message_default","Срок действия ссылки закончился."), translations=translations), 410
 
         offer = json.loads(link["offer_snapshot_json"])
 
         # already final?
         if link["status"] == "AGREED":
-            return render_template("accepted.html", offer=offer, when=link["agreed_at"], already=True)
+            return render_template("accepted.html", offer=offer, when=link["agreed_at"], already=True, translations=translations)
         if link["status"] == "REJECTED":
-            return render_template("rejected.html", offer=offer, when=link["rejected_at"], already=True)
+            return render_template("rejected.html", offer=offer, when=link["rejected_at"], already=True, translations=translations)
 
         # mark opened if first time
         if not link["opened_at"]:
@@ -463,7 +473,7 @@ def reject_page():
         c.execute("UPDATE links SET rejected_at=?, status='REJECTED' WHERE id=?", (now, link["id"]))
         conn.commit()
 
-    return render_template("rejected.html", offer=offer, when=now, already=False)
+    return render_template("rejected.html", offer=offer, when=now, already=False, translations=translations)
 
 
 # ---------- Internal: Order mapping ----------

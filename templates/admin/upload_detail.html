@@ -2,7 +2,7 @@
 {% block title %}Загрузка #{{ batch['id'] }}{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between mb-3">
-  <h3>Загрузка #{{ batch["id"] }} — {{ batch["filename"] }}</h3>
+  <h3>Загрузка #{{ batch["id"] }} - {{ batch["filename"] }}</h3>
   <div>
     <form method="post" action="{{ url_for('admin.upload_assign_tokens', upload_id=batch['id']) }}" style="display:inline">
       <button class="btn btn-sm btn-outline-secondary">Назначить токены</button>

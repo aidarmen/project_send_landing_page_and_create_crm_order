@@ -52,3 +52,5 @@ tests
 ./data
 add_prefix_to_phone.py
 add_urls_to_excel.py
+./batches
+./not_to_send

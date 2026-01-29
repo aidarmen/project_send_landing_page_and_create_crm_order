@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Телеком Интернет-услуги — Bereket</title>
+  <title>Телеком Интернет-услуги - Bereket</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
@@ -35,8 +35,8 @@
           <span class="inline-flex items-center gap-2 text-xs font-semibold bg-white/10 rounded-full px-3 py-1 mb-4">
             <i data-feather="star"></i> Новинка
           </span>
-          <h1 class="text-4xl md:text-5xl font-extrabold mb-5 leading-tight">Bereket — ваш универсальный пакет связи</h1>
-          <p class="text-lg/8 text-white/90 mb-8">Безлимитный интернет дома, мобильная связь для семьи, ТВ и онлайн-кинотеатры — соберите пакет под себя.</p>
+          <h1 class="text-4xl md:text-5xl font-extrabold mb-5 leading-tight">Bereket - ваш универсальный пакет связи</h1>
+          <p class="text-lg/8 text-white/90 mb-8">Безлимитный интернет дома, мобильная связь для семьи, ТВ и онлайн-кинотеатры - соберите пакет под себя.</p>
           <a href="#bereket" class="inline-flex items-center gap-2 bg-[#FF6B00] hover:bg-[#E05D00] transition px-6 py-3 rounded-xl font-bold">
             Выбрать пакет <i data-feather="chevron-right"></i>
           </a>
@@ -53,7 +53,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="mb-10 text-center">
         <h2 class="text-3xl font-extrabold">Соберите Bereket под себя</h2>
-        <p class="text-gray-600 mt-2">Выберите срок контракта, оператора и количество SIM — цена пересчитается автоматически.</p>
+        <p class="text-gray-600 mt-2">Выберите срок контракта, оператора и количество SIM - цена пересчитается автоматически.</p>
       </div>
 
       <div class="grid lg:grid-cols-[1fr_420px] gap-8 items-start">
@@ -193,7 +193,7 @@
             <div class="space-y-3 text-sm">
               <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Безлимитный домашний интернет до 500 Мб/с</span></div>
               <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>Мобильная связь: 60 ГБ, безлимит внутри сети, 250 мин.</span></div>
-              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>1 SIM для гаджетов — 5 ГБ</span></div>
+              <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>1 SIM для гаджетов - 5 ГБ</span></div>
               <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>TV+ mobile и 170+ каналов</span></div>
               <div class="flex items-center gap-2"><i data-feather="check" class="text-green-600"></i><span>9 онлайн-кинотеатров</span></div>
             </div>
@@ -225,7 +225,7 @@
           <p class="mb-4">Оформляя подписку на наш интернет, вы соглашаетесь со следующими условиями:</p>
           <ol class="list-decimal pl-5 space-y-2">
             <li>Услуга предоставляется на ежемесячной основе.</li>
-            <li>Минимальный срок договора — 12 месяцев.</li>
+            <li>Минимальный срок договора - 12 месяцев.</li>
             <li>При досрочном расторжении взымается штраф 10 000₸.</li>
             <li>Скорость предоставляется «до» заявленной и может меняться в зависимости от загрузки сети.</li>
             <li>Доступность услуги зависит от технической возможности по вашему адресу.</li>
@@ -318,9 +318,9 @@
     // Правила ценообразования (можно менять под реальную тарифку)
     function calcPrice(s) {
       let price = baseNew;
-      // контракт 3 года — скидка 500₸; без контракта — +500₸
+      // контракт 3 года - скидка 500₸; без контракта - +500₸
       price += s.contract === '3y' ? -500 : 500;
-      // 4 SIM — +1000₸
+      // 4 SIM - +1000₸
       price += Number(s.sims) === 4 ? 1000 : 0;
       return Math.max(price, 0);
     }
