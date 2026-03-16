@@ -1,0 +1,23 @@
+services:
+  web:
+    build: .
+    image: landing-admin:latest
+    ports:
+      - "127.0.0.1:5000:5000"   # bind only to loopback; Nginx will proxy
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Almaty
+      ORDER_API_URL: ${ORDER_API_URL}
+      BASE_URL: ${BASE_URL}
+      DB_PATH: /app/data/app.db
+    volumes:
+      - ./data:/app/data            # SQLite & any persisted files
+      - ./uploads:/app/uploads      # if you save user files/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

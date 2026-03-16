@@ -1,0 +1,113 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Позволяет запускать вручную из GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    - name: Add server to known hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Deploy to server
+      env:
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_PATH: ${{ secrets.SERVER_PATH }}
+      run: |
+        echo "🚀 Starting deployment..."
+        echo "📡 Server: ${SERVER_USER}@${SERVER_HOST}"
+        echo "📁 Path: ${SERVER_PATH}"
+        
+        # Копируем скрипт деплоя на сервер
+        scp deploy.sh ${SERVER_USER}@${SERVER_HOST}:/tmp/deploy.sh
+        
+        # Выполняем деплой на сервере
+        ssh ${SERVER_USER}@${SERVER_HOST} << ENDSSH
+          set -e
+          export SERVER_PATH="${SERVER_PATH}"
+          
+          echo "📁 Project directory: $SERVER_PATH"
+          cd "$SERVER_PATH"
+          
+          # 1. Бэкап базы данных
+          echo ""
+          echo "1. Creating database backup..."
+          if [ -f "./data/app.db" ]; then
+            BACKUP_DIR="./backups"
+            mkdir -p "$BACKUP_DIR"
+            TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+            BACKUP_FILE="$BACKUP_DIR/app.db.backup.$TIMESTAMP"
+            cp ./data/app.db "$BACKUP_FILE"
+            echo "   ✅ Backup created: $BACKUP_FILE"
+          fi
+          
+          # 2. Получение изменений
+          echo ""
+          echo "2. Pulling latest changes from GitHub..."
+          git fetch origin
+          git reset --hard origin/main
+          
+          # 3. Пересборка Docker образа
+          echo ""
+          echo "3. Building Docker image..."
+          sudo docker compose build web
+          
+          # 4. Перезапуск контейнеров
+          echo ""
+          echo "4. Restarting containers..."
+          sudo docker compose up -d web
+          
+          # 5. Ожидание запуска
+          echo ""
+          echo "5. Waiting for container to be healthy..."
+          sleep 15
+          
+          # 6. Проверка статуса
+          echo ""
+          echo "6. Checking container status..."
+          sudo docker compose ps
+          
+          # 7. Проверка базы данных
+          echo ""
+          echo "7. Verifying database..."
+          if [ -f "./data/app.db" ]; then
+            DB_SIZE=$(stat -c %s ./data/app.db 2>/dev/null || stat -f %z ./data/app.db 2>/dev/null)
+            if [ "$DB_SIZE" -gt 0 ]; then
+              echo "   ✅ Database exists and has data ($(du -h ./data/app.db | cut -f1))"
+            fi
+          fi
+          
+          # 8. Последние логи
+          echo ""
+          echo "8. Recent logs:"
+          sudo docker compose logs --tail=20 web
+          
+          echo ""
+          echo "✅ Deployment completed successfully!"
+ENDSSH
+    
+    - name: Deployment status
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "✅ Deployment successful!"
+        else
+          echo "❌ Deployment failed!"
+          exit 1
+        fi
+

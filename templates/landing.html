@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{{ offer.title }} - {{ translations.online_connection }}</title>
+  <meta name="description" content="{{ translations.online_connection }} - {{ offer.title }}. {{ translations.hero_description }}">
+  <link rel="icon" href="/static/favicon.ico">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ offer.title }}  {{ translations.online_connection }}">
+  <meta property="og:description" content="{{ translations.online_connection }} - {{ offer.title }}. {{ translations.hero_description }}">
+  <meta property="og:url" content="{{ request.url | force_https }}">
+  <meta name="twitter:card" content="summary">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <style>
+    details.faq-item .faq-plus { display: inline; } details.faq-item .faq-minus { display: none; }
+    details.faq-item[open] .faq-plus { display: none; } details.faq-item[open] .faq-minus { display: inline; }
+    .hero-banner { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    .hero-bg-horses {
+      background-image: url('/static/images/baige_horses.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .hero-blue-vignette {
+      background: linear-gradient(to right,
+        rgba(4, 31, 63, 0.92) 0%,
+        rgba(4, 31, 63, 0.68) 22%,
+        rgba(4, 31, 63, 0.48) 50%,
+        rgba(4, 31, 63, 0.12) 78%,
+        rgba(4, 31, 63, 0.02) 100%);
+    }
+    .hero-logo-icon { width: 3.5rem; height: 2.5rem; display: flex; align-items: center; }
+    .hero-logo-icon img { height: 2.5rem; width: auto; max-width: none; object-fit: contain; object-position: left; }
+  </style>
+</head>
+<body class="antialiased text-gray-900">
+
+  <!-- Навигация (минимальная) -->
+  <nav class="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="/static/images/logo.png" alt="Logo" class="h-8 w-auto">
+        <span class="font-bold">{{ translations.online_connection }}</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Language Toggle Button (only) -->
+        <button id="langToggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors">
+          <span id="langDisplay">{{ 'ҚАЗ' if current_lang == 'kk' else 'РУС' }}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+ 
+  <!-- Герой: задний фон — чёрный; лошади и роутер на переднем плане; контент без фона, чтобы не перекрывать -->
+  <section class="hero-banner relative overflow-hidden min-h-[620px] md:min-h-[720px] flex bg-black">
+    <div class="absolute inset-0 pointer-events-none z-0 bg-black"></div>
+    {% if comps|length == 1 and comps[0].type == 'internet' %}
+    <div class="absolute inset-0 pointer-events-none z-[1] hero-bg-horses"></div>
+    <div class="absolute inset-0 pointer-events-none z-[1] hero-blue-vignette" aria-hidden="true"></div>
+    {% endif %}
+    <div class="absolute inset-0 pointer-events-none z-[2] flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-4 sm:pb-5">
+      <p class="text-[8px] sm:text-[9px] text-white/80 whitespace-nowrap overflow-x-auto max-w-[70%] sm:max-w-[60%]">{{ translations.license }}</p>
+      <img src="/static/images/baige_router.png" alt="Router Baige 5G" class="hidden md:block h-64 lg:h-80 xl:h-96 w-auto object-contain">
+    </div>
+    {% if comps|length == 1 and comps[0].type == 'internet' %}
+    <div class="hidden lg:flex absolute left-4 xl:left-6 top-1/2 -translate-y-1/2 z-10 flex-col w-[360px] xl:w-[420px] rounded-xl bg-gray-800/95 px-6 py-8">
+        <div class="flex items-baseline gap-2.5 mb-4">
+          <span class="text-white font-extrabold text-3xl xl:text-4xl tracking-tight">BAIGE</span>
+          <span class="inline-flex items-center justify-center rounded-lg border-2 border-white bg-white text-gray-800 font-bold text-xl px-2.5 py-1">5G</span>
+        </div>
+        <p class="text-white font-bold text-xl xl:text-2xl uppercase leading-tight mb-8">
+          <span class="block">{{ translations.baige_brand_slogan_1 }}</span>
+          <span class="block">{{ translations.baige_brand_slogan_2 }}</span>
+        </p>
+        <div class="grid grid-cols-4 gap-3">
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <svg class="w-7 h-7 xl:w-8 xl:h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12L12 5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_speed }}</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <svg class="w-7 h-7 xl:w-8 xl:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1 8l2 2-2 2m20 0l-2-2 2-2"/></svg>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_wireless }}</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <svg class="w-7 h-7 xl:w-8 xl:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_warranty }}</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <span class="text-white font-bold text-lg xl:text-xl">64</span>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_devices }}</span>
+          </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="relative z-10 w-full flex justify-center items-center py-14 px-4 sm:px-6 lg:px-8 bg-transparent">
+      <div class="max-w-3xl mx-auto text-center w-full bg-transparent">
+        <div class="hero-logo flex flex-col items-center gap-1 mb-4">
+          <div class="hero-logo-icon overflow-hidden flex justify-start" aria-hidden="true">
+            <img src="/static/images/logo.png" alt="" class="h-10 w-auto max-w-none block">
+          </div>
+          <span class="text-white font-semibold text-lg tracking-wide">ҚАЗАҚТЕЛЕКОМ</span>
+        </div>
+        {% if comps|length == 1 and comps[0].type == 'internet' %}
+        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-6">{{ translations.hero_slogan_baige }}</h1>
+        {% else %}
+        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-3 uppercase">{{ translations.hero_title }}</h1>
+        <div class="mt-3 mb-6">
+          {% if offer.price %}
+            <div class="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }} {{ offer.currency or '₸' }}</div>
+          {% else %}
+            <div class="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight">{{ translations.to_be_determined }}</div>
+          {% endif %}
+          <div class="text-sm text-white/90 mt-1">{{ translations.banner_note }}</div>
+          <div class="text-sm text-white/90 mt-2 font-semibold">{{ translations.family_offer }}</div>
+          <div class="text-xs text-white/80 mt-1 uppercase">{{ translations.deadline }}</div>
+        </div>
+        <div class="flex gap-3 justify-center flex-wrap mb-6">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-300 text-yellow-900">{{ translations.promo_label }}</span>
+        </div>
+        {% endif %}
+
+        <!-- Карточки услуг только из состава предложения (comps), центрируются -->
+        <div class="flex flex-wrap justify-center gap-4 mb-6">
+          {% for c in comps %}
+          <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm min-w-[160px] sm:min-w-[180px]">
+            {% if c.type == 'internet' %}
+            <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ c.title or translations.card_40gb }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_40gb }}</div>
+            <div class="text-sm text-white/80">{{ translations.internet }}</div>
+            {% elif c.type == 'home_phone' %}
+            <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ c.title or translations.card_250min }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_250min }}</div>
+            <div class="text-sm text-white/80">{{ translations.home_phone }}</div>
+            {% elif c.type == 'tv' %}
+            <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ c.title or translations.card_tv }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_tv }}</div>
+            <div class="text-sm text-white/80">{{ translations.tv }}</div>
+            {% elif c.type == 'mobile' or c.type == 'sim_devices' %}
+            <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ c.title or translations.card_sim }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_sim }}</div>
+            <div class="text-sm text-white/80">{{ translations.sim }}</div>
+            {% else %}
+            <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ c.title }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title }}</div>
+            <div class="text-sm text-white/80">{{ c.type }}</div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+     
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Содержимое: динамические компоненты + сводка/согласие -->
+  <section class="py-12 bg-gray-50 relative">
+    <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.8;"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_380px] gap-8 items-start">
+
+      <!-- Левая колонка: Что входит — только компоненты из предложения (comps) -->
+      <div class="space-y-6">
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8">
+          <h2 class="text-2xl font-extrabold">{{ translations.what_included }}</h2>
+          <p class="text-gray-600 mt-2">{{ translations.package_individual }}</p>
+          <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+            {% for c in comps %}
+            <li class="flex items-start gap-3 bg-gray-50 border rounded-lg p-3">
+              {% if c.type == 'internet' %}
+              <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or (translations.card_40gb ~ ' ' ~ translations.internet) }}</span>
+              {% elif c.type == 'home_phone' %}
+              <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or (translations.card_250min ~ ' ' ~ translations.minutes) }}</span>
+              {% elif c.type == 'tv' %}
+              <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or (translations.card_tv ~ ' ' ~ translations.tv) }}</span>
+              {% elif c.type == 'mobile' %}
+              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or translations.card_sim }}</span>
+              {% elif c.type == 'sim_devices' %}
+              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or translations.sim }}</span>
+              {% else %}
+              <img src="/static/images/Success_Checkmark_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or c.type }}</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% if not comps %}
+          <p class="text-gray-500 mt-2">{{ translations.package_not_specified }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Правая колонка: сводка и согласие -->
+      <aside class="lg:sticky lg:top-20">
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div class="flex items-start justify-between">
+            <div>
+              {% if comps|length == 1 and comps[0].type == 'internet' %}
+              <div class="mt-1">
+                {% if offer.price %}
+                  <p class="text-gray-700 font-medium">{{ (translations.price_label_month or 'Цена: {price} ₸ / месяц').replace('{price}', ('{:,.0f}'.format(offer.price)).replace(',', ' ')) }}</p>
+                  <p class="text-sm text-gray-600 mt-1">{{ translations.router_rental_note }}</p>
+                {% else %}
+                  <p class="text-xl font-bold text-blue-700">{{ translations.to_be_determined }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-2">{{ translations.offer_personal_note }}</p>
+              </div>
+              {% else %}
+              <p class="text-sm text-gray-500">{{ translations.price_per_month }}</p>
+              <div class="mt-1">
+                {% if offer.price %}
+                  <div class="text-3xl font-extrabold text-blue-700">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }} {{ offer.currency or '₸' }}</div>
+                {% else %}
+                  <div class="text-xl font-bold text-blue-700">{{ translations.to_be_determined }}</div>
+                {% endif %}
+                <div class="text-sm text-gray-600 mt-1">{{ translations.banner_note }}</div>
+                <div class="text-sm text-gray-600 mt-1 font-semibold">{{ translations.family_offer }}</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <hr class="my-6">
+
+          <!-- Информация о клиенте -->
+          {% if customer_account_id or address %}
+            <div class="mb-6 pb-6 border-b border-gray-200">
+              <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ translations.your_data }}</h3>
+              <div class="space-y-2 text-sm">
+                {% if customer_account_id %}
+                  <div class="flex justify-between items-center">
+                    <span class="text-gray-600">{{ translations.account_number }}:</span>
+                    <span class="font-semibold text-gray-900">{{ customer_account_id }}</span>
+                  </div>
+                {% endif %}
+                {% if address %}
+                  <div class="mt-2">
+                    <span class="text-gray-600 block mb-1">{{ translations.address }}:</span>
+                    <div class="text-gray-900 font-medium">
+                      {% if address.TOWN_NAME %}
+                        {{ address.TOWN_NAME }}{% if address.STREET_NAME or address.HOUSE %}, {% endif %}
+                      {% endif %}
+                      {% if address.STREET_NAME %}
+                        {{ address.STREET_NAME }}{% if address.HOUSE %}, {% endif %}
+                      {% endif %}
+                      {% if address.HOUSE %}
+                        {{ translations.house }} {{ address.HOUSE }}
+                        {% if address.SUB_HOUSE %}/{{ address.SUB_HOUSE }}{% endif %}
+                      {% endif %}
+                      {% if address.FLAT %}
+                        {% if address.HOUSE %}, {% endif %}{{ translations.flat }} {{ address.FLAT }}
+                      {% endif %}
+                      {% if address.ZIP_CODE %}
+                        <br><span class="text-gray-600">{{ translations.zip_code }}: {{ address.ZIP_CODE }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Короткий список преимуществ из компонентов -->
+          <div class="space-y-3 text-sm">
+            {% for c in comps %}
+              {% if c.type == 'internet' and c.max_speed_mbps %}
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.home_internet_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}</span></div>
+              {% elif c.type == 'mobile' and c.data_gb %}
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.mobile_internet }} {{ c.data_gb }} {{ translations.gb }}{% if c.sims %}, {{ c.sims }} {{ translations.sim }}{% endif %}</span></div>
+              {% elif c.type == 'tv' and c.channels %}
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ c.channels }}+ {{ translations.tv_channels }}</span></div>
+              {% elif c.type == 'home_phone' %}
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.home_phone_in_package }}</span></div>
+              {% elif c.type == 'sim_devices' and c.data_gb %}
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.sim_for_devices }} - {{ c.data_gb }} {{ translations.gb }}</span></div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <form method="post" action="/agree" class="mt-6" id="agreeForm">
+            <input type="hidden" name="token" value="{{ token }}">
+            <div class="flex items-center gap-2 mb-3">
+              <input type="checkbox" id="agree" class="h-5 w-5">
+              <label for="agree" class="text-gray-700 text-sm">{{ translations.read_and_agree }}</label>
+            </div>
+            <button id="acceptBtn"
+                    class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-extrabold text-white bg-gray-400"
+                    disabled>
+              <i data-feather="check-circle"></i> {{ translations.agree }}
+            </button>
+          </form>
+
+          <form method="post" action="/reject" class="mt-2">
+            <input type="hidden" name="token" value="{{ token }}">
+            <button class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold text-red-700 bg-red-50 hover:bg-red-100">
+              <i data-feather="x-circle"></i> {{ translations.reject }}
+            </button>
+          </form>
+
+          <p class="text-xs text-gray-500 mt-4">
+            {% if comps|length == 1 and comps[0].type == 'internet' %}
+            {{ translations.consent_fine_print_baige }}
+            {% else %}
+            Факт согласия фиксируется автоматически (время, IP-адрес, браузер). Используется одноразовый токен.
+            {% endif %}
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- Блок 2: Что вы получаете (Baige / FWA) -->
+  {% if comps|length == 1 and comps[0].type == 'internet' %}
+  <section class="py-12 bg-white border-t border-gray-100">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">{{ translations.what_you_get_title }}</h2>
+      <ul class="space-y-6">
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">1</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_1_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_1_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">2</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_2_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_2_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_3_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_3_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">4</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_4_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_4_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">5</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_5_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_5_desc }}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Блок 3: Как подключить -->
+  <section class="py-12 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-2 text-center">{{ translations.how_to_connect_title }}</h2>
+      <p class="text-gray-600 text-center mb-8">{{ translations.how_to_connect_sub }}</p>
+      <ol class="space-y-4">
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+          <span>{{ translations.how_to_connect_step_1 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
+          <span>{{ translations.how_to_connect_step_2 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span>
+          <span>{{ translations.how_to_connect_step_3 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">4</span>
+          <span>{{ translations.how_to_connect_step_4 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">5</span>
+          <span>{{ translations.how_to_connect_step_5 }}</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Блок 4: FAQ (раскрывающиеся блоки) -->
+  <section class="py-12 bg-white border-t border-gray-100">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">{{ translations.faq_title }}</h2>
+      <div class="space-y-2">
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_1_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_1_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_2_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_2_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_3_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_3_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_4_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_4_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_5_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_5_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_6_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_6_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_7_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_7_a }}</div>
+        </details>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Договор / условия (обновлено) -->
+  <section class="py-12 bg-gray-50 relative">
+    <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.6;"></div>
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="bg-white rounded-2xl p-8 border border-gray-200">
+        <h2 class="text-2xl font-bold mb-6 text-center">{{ translations.terms_title }}</h2>
+        <div class="bg-white p-6 rounded-xl mb-6 max-h-96 overflow-y-auto border border-gray-200 text-sm leading-6">
+          <ul class="list-disc pl-5 space-y-2 text-gray-700">
+            <li>{{ translations.terms_1 }}</li>
+            <li>{{ translations.terms_2 }}</li>
+            <li>{{ translations.terms_3 }}</li>
+            <li>{{ translations.terms_4 }}</li>
+            <li>{{ translations.terms_5 }}</li>
+          </ul>
+
+          <h3 class="font-bold mt-6 mb-2">{{ translations.privacy_title }}</h3>
+          <p class="text-gray-700">{{ translations.privacy_text }}</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-gray-500">
+          <img src="/static/images/Trust_Security_Badge_Illustration.png" alt="Безопасность" class="w-5 h-5 flex-shrink-0">
+          <span>{{ translations.operator_notice }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-gray-400">
+      <p class="mb-2">© {{ (now() if false) or '2026' }} {{ translations.all_rights_reserved }}</p>
+      <p class="text-xs">{{ translations.license }}</p>
+    </div>
+  </footer>
+
+  <script>
+    AOS.init(); feather.replace();
+
+    // Включать кнопку «Согласен» только после галочки
+    const agree = document.getElementById('agree');
+    const acceptBtn = document.getElementById('acceptBtn');
+    if (agree && acceptBtn) {
+      agree.addEventListener('change', () => {
+        const on = agree.checked;
+        acceptBtn.disabled = !on;
+        acceptBtn.classList.toggle('bg-gray-400', !on);
+        acceptBtn.classList.toggle('bg-blue-600', on);
+        acceptBtn.classList.toggle('hover:bg-blue-700', on);
+      });
+    }
+
+    // Language toggle functionality
+    function setLanguageCookie(lang) {
+      const expires = new Date();
+      expires.setFullYear(expires.getFullYear() + 1); // 1 year expiration
+      document.cookie = `landing_lang=${lang}; expires=${expires.toUTCString()}; path=/`;
+    }
+
+    function getCurrentLanguage() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'landing_lang') {
+          return value || 'ru';
+        }
+      }
+      return 'ru';
+    }
+
+    const langToggle = document.getElementById('langToggle');
+    const langDisplay = document.getElementById('langDisplay');
+    const currentLang = '{{ current_lang }}';
+
+    if (langToggle && langDisplay) {
+      langToggle.addEventListener('click', () => {
+        // Determine target language based on current button label for immediate UX feedback
+        const label = (langDisplay.innerText || '').trim();
+        const newLang = label === 'РУС' ? 'kk' : 'ru';
+        // update button label immediately
+        langDisplay.innerText = newLang === 'kk' ? 'ҚАЗ' : 'РУС';
+        setLanguageCookie(newLang);
+        // Reload page with new language param
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', newLang);
+        window.location.href = url.toString();
+      });
+    }
+  </script>
+</body>
+</html>
+
+
+

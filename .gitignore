@@ -1,0 +1,56 @@
+@'
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.env
+.venv/
+venv/
+# IDE
+.vscode/
+.idea/
+.ipynb_checkpoints/
+# OS
+.DS_Store
+Thumbs.db
+# Data/uploads
+data/
+uploads/
+# SQLite
+*.sqlite
+*.db
+# Logs
+*.log
+# Node
+node_modules/
+# Build
+dist/
+build/
+# Excel/CSV test files
+*.xlsx
+*.xls
+*.csv
+# Environment files with secrets (DO NOT commit!)
+.env
+.env.local
+.env.*.local
+*.env.local
+.env.production
+.env.*
+# IMPORTANT: Never commit files containing API keys, passwords, or other secrets
+'@ | Out-File -Encoding UTF8 .gitignore
+*.ipynb
+app1.py
+diagrams
+*.pdf
+*.crt
+*.key
+*.docx
+.ipynb_checkpoints/
+tests
+./data
+add_prefix_to_phone.py
+add_urls_to_excel.py
+./batches
+./not_to_send
