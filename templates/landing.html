@@ -39,6 +39,7 @@
 </head>
 <body class="antialiased text-gray-900">
   {% set comps = comps|default([]) %}
+  {% set baige_hero = (comps|selectattr('type', 'equalto', 'internet')|list|length > 0) %}
   <!-- Навигация (минимальная), тёмно-серая плашка -->
   <nav class="sticky top-0 z-40 border-b border-gray-600" style="background-color: #374151;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
@@ -61,7 +62,7 @@
   <!-- Герой: задний фон — чёрный; лошади и роутер на переднем плане; контент без фона, чтобы не перекрывать -->
   <section class="hero-banner relative overflow-hidden min-h-[620px] md:min-h-[720px] flex bg-black w-full min-w-full">
     <div class="absolute inset-0 pointer-events-none z-0 bg-black"></div>
-    {% if comps|length == 1 and comps[0].type == 'internet' %}
+    {% if baige_hero %}
     <div class="absolute inset-0 pointer-events-none z-[1] hero-bg-horses"></div>
     <div class="absolute inset-0 pointer-events-none z-[1] hero-blue-vignette" aria-hidden="true"></div>
     {% endif %}
@@ -69,7 +70,7 @@
       <p class="text-[8px] sm:text-[9px] text-white/80 whitespace-nowrap overflow-x-auto max-w-[70%] sm:max-w-[60%]">{{ translations.license }}</p>
       <img src="/static/images/baige_router.png" alt="Router Baige 5G" class="hidden md:block h-64 lg:h-80 xl:h-96 w-auto object-contain">
     </div>
-    {% if comps|length == 1 and comps[0].type == 'internet' %}
+    {% if baige_hero %}
     <div class="hidden lg:flex absolute left-4 xl:left-6 top-1/2 -translate-y-1/2 z-10 flex-col w-[360px] xl:w-[420px] rounded-xl bg-gray-800/95 px-6 py-8">
         <div class="flex items-baseline gap-2.5 mb-4">
           <span class="text-white font-extrabold text-3xl xl:text-4xl tracking-tight">BAIGE</span>
@@ -114,7 +115,7 @@
             <img src="/static/images/logo.png" alt="ҚАЗАҚТЕЛЕКОМ" class="h-10 w-auto max-w-none block">
           </div>
         </div>
-        {% if comps|length == 1 and comps[0].type == 'internet' %}
+        {% if baige_hero %}
         <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-6">{{ translations.hero_slogan_baige }}</h1>
         {% else %}
         <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-3 uppercase">{{ translations.hero_title }}</h1>
@@ -214,7 +215,7 @@
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div class="flex items-start justify-between">
             <div>
-              {% if comps|length == 1 and comps[0].type == 'internet' %}
+              {% if baige_hero %}
               <div class="mt-1">
                 {% if offer.price %}
                   <p class="text-gray-700 font-medium">{{ (translations.price_label_month or 'Цена: {price} ₸ / месяц').replace('{price}', ('{:,.0f}'.format(offer.price)).replace(',', ' ')) }}</p>
@@ -317,7 +318,7 @@
           </form>
 
           <p class="text-xs text-gray-500 mt-4">
-            {% if comps|length == 1 and comps[0].type == 'internet' %}
+            {% if baige_hero %}
             {{ translations.consent_fine_print_baige }}
             {% else %}
             Факт согласия фиксируется автоматически (время, IP-адрес, браузер). Используется одноразовый токен.
@@ -329,7 +330,7 @@
   </section>
 
   <!-- Блок 2: Что вы получаете (Baige / FWA) -->
-  {% if comps|length == 1 and comps[0].type == 'internet' %}
+  {% if baige_hero %}
   <section class="py-12 bg-white border-t border-gray-100">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">{{ translations.what_you_get_title }}</h2>
