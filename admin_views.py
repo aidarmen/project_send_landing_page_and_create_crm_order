@@ -424,17 +424,15 @@ def offer_save():
                        f.get("po_struct_element_id") or None, f.get("product_num") or None,
                        f.get("resource_spec_id") or None, f["id"]))
             
-            # Automatically update snapshots for active links (NEW/OPENED status)
+            # Automatically update snapshots for all links of this offer (so landing shows current components)
             offer_id = int(f["id"])
             snap = fetch_offer_snapshot(c, offer_id)
             if snap:
-                c.execute("""UPDATE links 
-                             SET offer_snapshot_json = ?
-                             WHERE offer_id = ? AND status IN ('NEW', 'OPENED')""",
+                c.execute("""UPDATE links SET offer_snapshot_json = ? WHERE offer_id = ?""",
                           (json.dumps(snap, ensure_ascii=False), offer_id))
                 updated_count = c.rowcount
                 if updated_count > 0:
-                    debug_messages.append(f"✅ Автоматически обновлено {updated_count} активных ссылок (NEW/OPENED) с новым заголовком и данными предложения")
+                    debug_messages.append(f"✅ Обновлён снимок для {updated_count} ссылок — на лендинге отображается текущий состав услуг")
             
             conn.commit()
             # Store debug messages in session for display on the form
@@ -977,33 +975,31 @@ def upload_assign_tokens(upload_id):
     flash(f"Assigned tokens to {assigned} rows.", "success")
     return redirect(url_for("admin.upload_detail", upload_id=upload_id))
 
-# Update offer snapshot for all active links of an offer (to update price/other fields)
+# Update offer snapshot for all links of an offer (so landing shows current components/price)
 @bp.post("/offers/<int:offer_id>/update_snapshots")
 def update_offer_snapshots(offer_id):
-    """Update offer_snapshot_json for all active links (NEW/OPENED status) of a specific offer"""
+    """Update offer_snapshot_json for ALL links of this offer so landing shows current components."""
     with db() as conn:
         c = conn.cursor()
-        # Check if offer exists
         c.execute("SELECT id FROM offers WHERE id=?", (offer_id,))
         if not c.fetchone():
             flash("Offer not found", "danger")
             return redirect(url_for("admin.offers_list"))
-        
-        # Fetch new snapshot
         snap = fetch_offer_snapshot(c, offer_id)
         if not snap:
             flash("Failed to fetch offer snapshot", "danger")
             return redirect(url_for("admin.offers_list"))
-        
-        # Update all links with status NEW or OPENED (not yet agreed/rejected)
-        c.execute("""UPDATE links 
-                     SET offer_snapshot_json = ?
-                     WHERE offer_id = ? AND status IN ('NEW', 'OPENED')""",
-                  (json.dumps(snap, ensure_ascii=False), offer_id))
+        # Update all links for this offer (any status) so landing always shows current offer data
+        c.execute("""UPDATE links SET offer_snapshot_json = ? WHERE offer_id = ?""",
+                 (json.dumps(snap, ensure_ascii=False), offer_id))
         updated = c.rowcount
         conn.commit()
-    
-    flash(f"Updated offer snapshot for {updated} active link(s). Links with status AGREED/REJECTED were not changed.", "success")
+    comps = (snap.get("details") or {}).get("components") or []
+    comps_info = f", в снимке: {len(comps)} компонентов ({', '.join(c.get('type', '?') for c in comps) or 'нет'})" if comps is not None else ""
+    if updated == 0:
+        flash(f"Обновлено 0 ссылок для этого предложения. Проверьте, что загруженные ссылки созданы именно для предложения (offer_id={offer_id}). Компонентов в предложении: {len(comps)}.", "warning")
+    else:
+        flash(f"Обновлён снимок для {updated} ссылок{comps_info}. Если на лендинге по-прежнему «Состав не указан» — откройте ссылку с параметром ?debug=1 и проверьте число компонентов.", "success")
     return redirect(url_for("admin.offer_edit", oid=offer_id))
 
 # Resend order API request for a specific link

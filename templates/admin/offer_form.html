@@ -270,11 +270,14 @@
   <div class="col-12">
     <button class="btn btn-primary">Сохранить</button>
     {% if row %}
-    <form method="post" action="{{ url_for('admin.update_offer_snapshots', offer_id=row['id']) }}" style="display: inline;" onsubmit="return confirm('Обновить цену и другие данные для всех активных ссылок (NEW/OPENED)? Ссылки со статусом AGREED/REJECTED не будут изменены.');">
-      <button type="submit" class="btn btn-warning">Обновить цену в отправленных ссылках</button>
+    <form method="post" action="{{ url_for('admin.update_offer_snapshots', offer_id=row['id']) }}" style="display: inline;" onsubmit="return confirm('Обновить снимок предложения для всех ссылок этого оффера? На лендинге будет отображаться текущий состав услуг и цена.');">
+      <button type="submit" class="btn btn-warning ms-2">Обновить снимки для всех ссылок</button>
     </form>
     {% endif %}
   </div>
+  {% if row and details.get('components') %}
+  <div class="col-12 mt-2 text-muted small">В предложении сохранено услуг: {{ details.get('components')|length }}. Если на лендинге «Состав пакета не указан» — нажмите «Обновить снимки для всех ссылок».</div>
+  {% endif %}
 </form>
 
 {% if debug_messages %}

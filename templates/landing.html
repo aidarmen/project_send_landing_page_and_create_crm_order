@@ -528,6 +528,11 @@
       });
     }
   </script>
+  {% if debug %}
+  <div class="fixed bottom-0 left-0 right-0 bg-gray-900 text-white text-xs p-2 text-center z-50 font-mono">
+    Отладка: в снимке этой ссылки {{ comps|length }} компонентов — {{ (comps|map(attribute='type')|list)|join(', ') or 'нет' }}. Если 0 — сохраните состав в карточке предложения и нажмите «Обновить снимки».
+  </div>
+  {% endif %}
 </body>
 </html>
 

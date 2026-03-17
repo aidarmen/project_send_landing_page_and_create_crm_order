@@ -254,6 +254,7 @@ def landing(token):
         
         # Компоненты предложения (для героя Baige: фон и блок показываются при одном компоненте — интернет)
         comps = (offer.get("details") or {}).get("components") or []
+        debug = request.args.get("debug") == "1"
         
         template_response = render_template("landing.html", 
                              offer=offer, 
@@ -263,7 +264,8 @@ def landing(token):
                              address=address,
                              current_lang=lang,
                              translations=translations,
-                             comps=comps)
+                             comps=comps,
+                             debug=debug)
         
         # Set cookie if language was changed via URL parameter
         if set_lang_cookie:
