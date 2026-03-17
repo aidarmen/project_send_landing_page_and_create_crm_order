@@ -252,6 +252,9 @@ def landing(token):
         # Get all translations for current language
         translations = get_all_translations(lang)
         
+        # Компоненты предложения (для героя Baige: фон и блок показываются при одном компоненте — интернет)
+        comps = (offer.get("details") or {}).get("components") or []
+        
         template_response = render_template("landing.html", 
                              offer=offer, 
                              token=token, 
@@ -259,7 +262,8 @@ def landing(token):
                              customer_account_id=link["customer_account_id"],
                              address=address,
                              current_lang=lang,
-                             translations=translations)
+                             translations=translations,
+                             comps=comps)
         
         # Set cookie if language was changed via URL parameter
         if set_lang_cookie:

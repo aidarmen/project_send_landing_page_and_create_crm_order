@@ -38,7 +38,7 @@
   </style>
 </head>
 <body class="antialiased text-gray-900">
-
+  {% set comps = comps|default([]) %}
   <!-- Навигация (минимальная), тёмно-серая плашка -->
   <nav class="sticky top-0 z-40 border-b border-gray-600" style="background-color: #374151;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
