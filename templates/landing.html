@@ -15,19 +15,40 @@
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <style>
+    details.faq-item .faq-plus { display: inline; } details.faq-item .faq-minus { display: none; }
+    details.faq-item[open] .faq-plus { display: none; } details.faq-item[open] .faq-minus { display: inline; }
+    .hero-banner { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+    .hero-bg-horses {
+      background-image: url('/static/images/baige_horses.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .hero-blue-vignette {
+      background: linear-gradient(to right,
+        rgba(4, 31, 63, 0.92) 0%,
+        rgba(4, 31, 63, 0.68) 22%,
+        rgba(4, 31, 63, 0.48) 50%,
+        rgba(4, 31, 63, 0.25) 78%,
+        rgba(4, 31, 63, 0.18) 100%);
+    }
+    .hero-logo-icon { height: 2.5rem; display: flex; align-items: center; }
+    .hero-logo-icon img { height: 2.5rem; width: auto; max-width: none; object-fit: contain; }
+  </style>
 </head>
 <body class="antialiased text-gray-900">
 
-  <!-- Навигация (минимальная) -->
-  <nav class="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-40">
+  <!-- Навигация (минимальная), тёмно-серая плашка -->
+  <nav class="sticky top-0 z-40 border-b border-gray-600" style="background-color: #374151;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="/static/images/logo.png" alt="Logo" class="h-8 w-auto">
-        <span class="font-bold">{{ translations.online_connection }}</span>
+        <span class="font-bold text-white">{{ translations.online_connection }}</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- Language Toggle Button (only) -->
-        <button id="langToggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors">
+        <button id="langToggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-white/20 hover:bg-white/30 transition-colors border border-white/30">
           <span id="langDisplay">{{ 'ҚАЗ' if current_lang == 'kk' else 'РУС' }}</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
@@ -37,15 +58,66 @@
     </div>
   </nav>
  
-  <!-- Герой (vibrant banner) -->
-  <section class="relative overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-indigo-600 via-blue-600 to-teal-500"></div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-      <div class="max-w-3xl mx-auto text-center">
-        <img src="/static/images/logo.png" alt="Logo" class="mx-auto h-12 mb-4">
+  <!-- Герой: задний фон — чёрный; лошади и роутер на переднем плане; контент без фона, чтобы не перекрывать -->
+  <section class="hero-banner relative overflow-hidden min-h-[620px] md:min-h-[720px] flex bg-black w-full min-w-full">
+    <div class="absolute inset-0 pointer-events-none z-0 bg-black"></div>
+    {% if comps|length == 1 and comps[0].type == 'internet' %}
+    <div class="absolute inset-0 pointer-events-none z-[1] hero-bg-horses"></div>
+    <div class="absolute inset-0 pointer-events-none z-[1] hero-blue-vignette" aria-hidden="true"></div>
+    {% endif %}
+    <div class="absolute inset-0 pointer-events-none z-[2] flex items-end justify-between px-4 sm:px-6 lg:px-8 pb-4 sm:pb-5">
+      <p class="text-[8px] sm:text-[9px] text-white/80 whitespace-nowrap overflow-x-auto max-w-[70%] sm:max-w-[60%]">{{ translations.license }}</p>
+      <img src="/static/images/baige_router.png" alt="Router Baige 5G" class="hidden md:block h-64 lg:h-80 xl:h-96 w-auto object-contain">
+    </div>
+    {% if comps|length == 1 and comps[0].type == 'internet' %}
+    <div class="hidden lg:flex absolute left-4 xl:left-6 top-1/2 -translate-y-1/2 z-10 flex-col w-[360px] xl:w-[420px] rounded-xl bg-gray-800/95 px-6 py-8">
+        <div class="flex items-baseline gap-2.5 mb-4">
+          <span class="text-white font-extrabold text-3xl xl:text-4xl tracking-tight">BAIGE</span>
+          <span class="inline-flex items-center justify-center rounded-lg border-2 border-white bg-white text-gray-800 font-bold text-xl px-2.5 py-1">5G</span>
+        </div>
+        <p class="text-white font-bold text-xl xl:text-2xl uppercase leading-tight mb-8">
+          <span class="block">{{ translations.baige_brand_slogan_1 }}</span>
+          <span class="block">{{ translations.baige_brand_slogan_2 }}</span>
+        </p>
+        <div class="grid grid-cols-4 gap-3">
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <svg class="w-7 h-7 xl:w-8 xl:h-8 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12L12 5" stroke-linecap="round"/></svg>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_speed }}</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <svg class="w-7 h-7 xl:w-8 xl:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.14 0M1 8l2 2-2 2m20 0l-2-2 2-2"/></svg>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_wireless }}</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <svg class="w-7 h-7 xl:w-8 xl:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_warranty }}</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <div class="w-14 h-14 xl:w-16 xl:h-16 rounded-full bg-blue-500 flex items-center justify-center mb-2 flex-shrink-0">
+              <span class="text-white font-bold text-lg xl:text-xl">64</span>
+            </div>
+            <span class="text-white text-xs font-medium leading-tight">{{ translations.baige_feature_devices }}</span>
+          </div>
+        </div>
+    </div>
+    {% endif %}
+    <div class="relative z-10 w-full flex justify-center items-center py-14 px-4 sm:px-6 lg:px-8 bg-transparent">
+      <div class="max-w-3xl mx-auto text-center w-full bg-transparent">
+        <div class="hero-logo flex flex-col items-center gap-1 mb-4">
+          <div class="hero-logo-icon flex justify-center" aria-hidden="true">
+            <img src="/static/images/logo.png" alt="ҚАЗАҚТЕЛЕКОМ" class="h-10 w-auto max-w-none block">
+          </div>
+        </div>
+        {% if comps|length == 1 and comps[0].type == 'internet' %}
+        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-6">{{ translations.hero_slogan_baige }}</h1>
+        {% else %}
         <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-3 uppercase">{{ translations.hero_title }}</h1>
-
-        <!-- Price moved directly under title -->
         <div class="mt-3 mb-6">
           {% if offer.price %}
             <div class="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white tracking-tight">{{ ('{:,.0f}'.format(offer.price)).replace(',', ' ') }} {{ offer.currency or '₸' }}</div>
@@ -56,32 +128,38 @@
           <div class="text-sm text-white/90 mt-2 font-semibold">{{ translations.family_offer }}</div>
           <div class="text-xs text-white/80 mt-1 uppercase">{{ translations.deadline }}</div>
         </div>
-
         <div class="flex gap-3 justify-center flex-wrap mb-6">
           <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-300 text-yellow-900">{{ translations.promo_label }}</span>
         </div>
+        {% endif %}
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm">
-            <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ translations.card_40gb }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
-            <div class="text-white font-bold text-lg">{{ translations.card_40gb }}</div>
+        <!-- Карточки услуг только из состава предложения (comps), центрируются -->
+        <div class="flex flex-wrap justify-center gap-4 mb-6">
+          {% for c in comps %}
+          <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm min-w-[160px] sm:min-w-[180px]">
+            {% if c.type == 'internet' %}
+            <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ c.title or translations.card_40gb }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_40gb }}</div>
             <div class="text-sm text-white/80">{{ translations.internet }}</div>
-          </div>
-          <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm">
-            <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ translations.card_250min }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
-            <div class="text-white font-bold text-lg">{{ translations.card_250min }}</div>
+            {% elif c.type == 'home_phone' %}
+            <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ c.title or translations.card_250min }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_250min }}</div>
             <div class="text-sm text-white/80">{{ translations.home_phone }}</div>
-          </div>
-          <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm">
-            <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ translations.card_tv }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
-            <div class="text-white font-bold text-lg">{{ translations.card_tv }}</div>
+            {% elif c.type == 'tv' %}
+            <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ c.title or translations.card_tv }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_tv }}</div>
             <div class="text-sm text-white/80">{{ translations.tv }}</div>
-          </div>
-          <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm">
-            <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ translations.card_sim }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
-            <div class="text-white font-bold text-lg">{{ translations.card_sim }}</div>
+            {% elif c.type == 'mobile' or c.type == 'sim_devices' %}
+            <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ c.title or translations.card_sim }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title or translations.card_sim }}</div>
             <div class="text-sm text-white/80">{{ translations.sim }}</div>
+            {% else %}
+            <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ c.title }}" class="mx-auto w-20 h-20 sm:w-24 sm:h-24 mb-3">
+            <div class="text-white font-bold text-lg">{{ c.title }}</div>
+            <div class="text-sm text-white/80">{{ c.type }}</div>
+            {% endif %}
           </div>
+          {% endfor %}
         </div>
 
      
@@ -95,33 +173,39 @@
     <div class="absolute inset-0 pointer-events-none" style="background-image: url('/static/images/Decorative_Background_Pattern.svg'); background-repeat: repeat; background-size: 500px 500px; opacity: 0.8;"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_380px] gap-8 items-start">
 
-      <!-- Левая колонка: Что вы получаете (статично, согласно правкам) -->
+      <!-- Левая колонка: Что входит — только компоненты из предложения (comps) -->
       <div class="space-y-6">
         <div class="bg-white border border-gray-200 rounded-2xl p-6 md:p-8">
           <h2 class="text-2xl font-extrabold">{{ translations.what_included }}</h2>
           <p class="text-gray-600 mt-2">{{ translations.package_individual }}</p>
           <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+            {% for c in comps %}
             <li class="flex items-start gap-3 bg-gray-50 border rounded-lg p-3">
-              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="SIM" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
-              <span class="font-medium">{{ translations.card_sim }}</span>
+              {% if c.type == 'internet' %}
+              <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or (translations.card_40gb ~ ' ' ~ translations.internet) }}</span>
+              {% elif c.type == 'home_phone' %}
+              <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or (translations.card_250min ~ ' ' ~ translations.minutes) }}</span>
+              {% elif c.type == 'tv' %}
+              <img src="/static/images/TV_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or (translations.card_tv ~ ' ' ~ translations.tv) }}</span>
+              {% elif c.type == 'mobile' %}
+              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or translations.card_sim }}</span>
+              {% elif c.type == 'sim_devices' %}
+              <img src="/static/images/Mobile_Service_Icon_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or translations.sim }}</span>
+              {% else %}
+              <img src="/static/images/Success_Checkmark_Illustration.png" alt="{{ c.title }}" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
+              <span class="font-medium">{{ c.title or c.type }}</span>
+              {% endif %}
             </li>
-            <li class="flex items-start gap-3 bg-gray-50 border rounded-lg p-3">
-              <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="40GB" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
-              <span class="font-medium">{{ translations.card_40gb }} {{ translations.internet }}</span>
-            </li>
-            <li class="flex items-start gap-3 bg-gray-50 border rounded-lg p-3">
-              <img src="/static/images/Home_Phone_Service_Icon_Illustration.png" alt="250 minutes" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
-              <span class="font-medium">{{ translations.card_250min }} {{ translations.minutes }}</span>
-            </li>
-            <li class="flex items-start gap-3 bg-gray-50 border rounded-lg p-3">
-              <img src="/static/images/Success_Checkmark_Illustration.png" alt="100 SMS" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
-              <span class="font-medium">{{ translations.card_sms }}</span>
-            </li>
-            <li class="flex items-start gap-3 bg-gray-50 border rounded-lg p-3 col-span-full">
-              <img src="/static/images/TV_Service_Icon_Illustration.png" alt="TV+" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 flex-shrink-0">
-              <span class="font-medium">{{ translations.card_tv }} {{ translations.tv }}</span>
-            </li>
+            {% endfor %}
           </ul>
+          {% if not comps %}
+          <p class="text-gray-500 mt-2">{{ translations.package_not_specified }}</p>
+          {% endif %}
         </div>
       </div>
 
@@ -130,6 +214,17 @@
         <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
           <div class="flex items-start justify-between">
             <div>
+              {% if comps|length == 1 and comps[0].type == 'internet' %}
+              <div class="mt-1">
+                {% if offer.price %}
+                  <p class="text-gray-700 font-medium">{{ (translations.price_label_month or 'Цена: {price} ₸ / месяц').replace('{price}', ('{:,.0f}'.format(offer.price)).replace(',', ' ')) }}</p>
+                  <p class="text-sm text-gray-600 mt-1">{{ translations.router_rental_note }}</p>
+                {% else %}
+                  <p class="text-xl font-bold text-blue-700">{{ translations.to_be_determined }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-2">{{ translations.offer_personal_note }}</p>
+              </div>
+              {% else %}
               <p class="text-sm text-gray-500">{{ translations.price_per_month }}</p>
               <div class="mt-1">
                 {% if offer.price %}
@@ -140,6 +235,7 @@
                 <div class="text-sm text-gray-600 mt-1">{{ translations.banner_note }}</div>
                 <div class="text-sm text-gray-600 mt-1 font-semibold">{{ translations.family_offer }}</div>
               </div>
+              {% endif %}
             </div>
           </div>
 
@@ -187,7 +283,7 @@
           <div class="space-y-3 text-sm">
             {% for c in comps %}
               {% if c.type == 'internet' and c.max_speed_mbps %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.home_internet_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{% if current_lang == 'kk' %}{{ translations.home_internet }} {{ c.max_speed_mbps }}{{ translations.mbps }} {{ translations.up_to_suffix }}{% else %}{{ translations.home_internet_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}{% endif %}</span></div>
               {% elif c.type == 'mobile' and c.data_gb %}
                 <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.mobile_internet }} {{ c.data_gb }} {{ translations.gb }}{% if c.sims %}, {{ c.sims }} {{ translations.sim }}{% endif %}</span></div>
               {% elif c.type == 'tv' and c.channels %}
@@ -221,12 +317,129 @@
           </form>
 
           <p class="text-xs text-gray-500 mt-4">
+            {% if comps|length == 1 and comps[0].type == 'internet' %}
+            {{ translations.consent_fine_print_baige }}
+            {% else %}
             Факт согласия фиксируется автоматически (время, IP-адрес, браузер). Используется одноразовый токен.
+            {% endif %}
           </p>
         </div>
       </aside>
     </div>
   </section>
+
+  <!-- Блок 2: Что вы получаете (Baige / FWA) -->
+  {% if comps|length == 1 and comps[0].type == 'internet' %}
+  <section class="py-12 bg-white border-t border-gray-100">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">{{ translations.what_you_get_title }}</h2>
+      <ul class="space-y-6">
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">1</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_1_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_1_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">2</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_2_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_2_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_3_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_3_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">4</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_4_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_4_desc }}</p>
+          </div>
+        </li>
+        <li class="flex gap-4 items-start">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">5</span>
+          <div>
+            <h3 class="font-bold text-gray-900">{{ translations.what_you_get_5_title }}</h3>
+            <p class="text-gray-600 mt-1">{{ translations.what_you_get_5_desc }}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Блок 3: Как подключить -->
+  <section class="py-12 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-2 text-center">{{ translations.how_to_connect_title }}</h2>
+      <p class="text-gray-600 text-center mb-8">{{ translations.how_to_connect_sub }}</p>
+      <ol class="space-y-4">
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+          <span>{{ translations.how_to_connect_step_1 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
+          <span>{{ translations.how_to_connect_step_2 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span>
+          <span>{{ translations.how_to_connect_step_3 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">4</span>
+          <span>{{ translations.how_to_connect_step_4 }}</span>
+        </li>
+        <li class="flex gap-3 items-center">
+          <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">5</span>
+          <span>{{ translations.how_to_connect_step_5 }}</span>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Блок 4: FAQ (раскрывающиеся блоки) -->
+  <section class="py-12 bg-white border-t border-gray-100">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">{{ translations.faq_title }}</h2>
+      <div class="space-y-2">
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_1_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_1_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_2_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_2_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_3_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_3_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_4_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_4_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_5_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_5_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_6_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_6_a }}</div>
+        </details>
+        <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
+          <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden"> {{ translations.faq_7_q }} <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span></summary>
+          <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">{{ translations.faq_7_a }}</div>
+        </details>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <!-- Договор / условия (обновлено) -->
   <section class="py-12 bg-gray-50 relative">
@@ -316,3 +529,6 @@
   </script>
 </body>
 </html>
+
+
+
