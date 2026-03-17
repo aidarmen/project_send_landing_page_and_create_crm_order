@@ -65,6 +65,7 @@ TRANSLATIONS = {
         
         # Benefits list
         "home_internet_up_to": "Домашний интернет до",
+        "up_to_suffix": "",
         "mobile_internet": "Мобильный интернет",
         "tv_channels": "ТВ-каналов",
         "home_phone_in_package": "Домашний телефон в пакете",
@@ -195,7 +196,7 @@ TRANSLATIONS = {
         # Component labels
         "speed_up_to": "Дейін",
         "mbps": "Мбит/с",
-        "home_internet": "Үй интернеті",
+        "home_internet": "үй интернеті",
         "sim": "SIM",
         "data": "Интернет",
         "gb": "ГБ",
@@ -216,8 +217,9 @@ TRANSLATIONS = {
         "address": "Мекен-жай",
         "zip_code": "Индекс",
         
-        # Benefits list
+        # Benefits list (для шаблона: үй интернеті 1000Мбит/с дейін)
         "home_internet_up_to": "Үй интернеті дейін",
+        "up_to_suffix": "дейін",
         "mobile_internet": "Ұялы интернет",
         "tv_channels": "ТВ-арна",
         "home_phone_in_package": "Пакеттегі үй телефоны",

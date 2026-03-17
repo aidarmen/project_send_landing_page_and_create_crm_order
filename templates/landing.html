@@ -30,25 +30,25 @@
         rgba(4, 31, 63, 0.92) 0%,
         rgba(4, 31, 63, 0.68) 22%,
         rgba(4, 31, 63, 0.48) 50%,
-        rgba(4, 31, 63, 0.12) 78%,
-        rgba(4, 31, 63, 0.02) 100%);
+        rgba(4, 31, 63, 0.25) 78%,
+        rgba(4, 31, 63, 0.18) 100%);
     }
-    .hero-logo-icon { width: 3.5rem; height: 2.5rem; display: flex; align-items: center; }
-    .hero-logo-icon img { height: 2.5rem; width: auto; max-width: none; object-fit: contain; object-position: left; }
+    .hero-logo-icon { height: 2.5rem; display: flex; align-items: center; }
+    .hero-logo-icon img { height: 2.5rem; width: auto; max-width: none; object-fit: contain; }
   </style>
 </head>
 <body class="antialiased text-gray-900">
 
-  <!-- Навигация (минимальная) -->
-  <nav class="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-40">
+  <!-- Навигация (минимальная), тёмно-серая плашка -->
+  <nav class="sticky top-0 z-40 border-b border-gray-600" style="background-color: #374151;">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img src="/static/images/logo.png" alt="Logo" class="h-8 w-auto">
-        <span class="font-bold">{{ translations.online_connection }}</span>
+        <span class="font-bold text-white">{{ translations.online_connection }}</span>
       </div>
       <div class="flex items-center gap-4">
         <!-- Language Toggle Button (only) -->
-        <button id="langToggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-100 hover:bg-gray-200 transition-colors">
+        <button id="langToggle" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-white bg-white/20 hover:bg-white/30 transition-colors border border-white/30">
           <span id="langDisplay">{{ 'ҚАЗ' if current_lang == 'kk' else 'РУС' }}</span>
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
@@ -59,7 +59,7 @@
   </nav>
  
   <!-- Герой: задний фон — чёрный; лошади и роутер на переднем плане; контент без фона, чтобы не перекрывать -->
-  <section class="hero-banner relative overflow-hidden min-h-[620px] md:min-h-[720px] flex bg-black">
+  <section class="hero-banner relative overflow-hidden min-h-[620px] md:min-h-[720px] flex bg-black w-full min-w-full">
     <div class="absolute inset-0 pointer-events-none z-0 bg-black"></div>
     {% if comps|length == 1 and comps[0].type == 'internet' %}
     <div class="absolute inset-0 pointer-events-none z-[1] hero-bg-horses"></div>
@@ -110,10 +110,9 @@
     <div class="relative z-10 w-full flex justify-center items-center py-14 px-4 sm:px-6 lg:px-8 bg-transparent">
       <div class="max-w-3xl mx-auto text-center w-full bg-transparent">
         <div class="hero-logo flex flex-col items-center gap-1 mb-4">
-          <div class="hero-logo-icon overflow-hidden flex justify-start" aria-hidden="true">
-            <img src="/static/images/logo.png" alt="" class="h-10 w-auto max-w-none block">
+          <div class="hero-logo-icon flex justify-center" aria-hidden="true">
+            <img src="/static/images/logo.png" alt="ҚАЗАҚТЕЛЕКОМ" class="h-10 w-auto max-w-none block">
           </div>
-          <span class="text-white font-semibold text-lg tracking-wide">ҚАЗАҚТЕЛЕКОМ</span>
         </div>
         {% if comps|length == 1 and comps[0].type == 'internet' %}
         <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight mb-6">{{ translations.hero_slogan_baige }}</h1>
@@ -284,7 +283,7 @@
           <div class="space-y-3 text-sm">
             {% for c in comps %}
               {% if c.type == 'internet' and c.max_speed_mbps %}
-                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.home_internet_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}</span></div>
+                <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{% if current_lang == 'kk' %}{{ translations.home_internet }} {{ c.max_speed_mbps }}{{ translations.mbps }} {{ translations.up_to_suffix }}{% else %}{{ translations.home_internet_up_to }} {{ c.max_speed_mbps }} {{ translations.mbps }}{% endif %}</span></div>
               {% elif c.type == 'mobile' and c.data_gb %}
                 <div class="flex items-center gap-2"><img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain"><span>{{ translations.mobile_internet }} {{ c.data_gb }} {{ translations.gb }}{% if c.sims %}, {{ c.sims }} {{ translations.sim }}{% endif %}</span></div>
               {% elif c.type == 'tv' and c.channels %}
