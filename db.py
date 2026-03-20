@@ -94,6 +94,7 @@ def init_db():
           rejected_at TEXT,
           status TEXT DEFAULT 'NEW',    -- NEW | OPENED | AGREED | REJECTED | EXPIRED | USED
           offer_snapshot_json TEXT,
+          product_key TEXT,
           address_json TEXT,
           FOREIGN KEY(user_id) REFERENCES users(id),
           FOREIGN KEY(offer_id) REFERENCES offers(id),
@@ -103,6 +104,12 @@ def init_db():
         # Add address_json column if it doesn't exist (for existing databases)
         try:
             c.execute("ALTER TABLE links ADD COLUMN address_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+        # Add product_key column if it doesn't exist (for existing databases)
+        try:
+            c.execute("ALTER TABLE links ADD COLUMN product_key TEXT")
         except sqlite3.OperationalError:
             pass  # Column already exists
         

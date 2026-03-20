@@ -428,11 +428,57 @@ def offer_save():
             offer_id = int(f["id"])
             snap = fetch_offer_snapshot(c, offer_id)
             if snap:
-                c.execute("""UPDATE links SET offer_snapshot_json = ? WHERE offer_id = ?""",
-                          (json.dumps(snap, ensure_ascii=False), offer_id))
-                updated_count = c.rowcount
-                if updated_count > 0:
-                    debug_messages.append(f"✅ Обновлён снимок для {updated_count} ссылок — на лендинге отображается текущий состав услуг")
+                # Update only new links created after we started filling product_key
+                order_mapping = snap.get("order_mapping") or {}
+                product_key = None
+                try:
+                    po_offer_id = order_mapping.get("product_offer_id")
+                    po_struct_id = order_mapping.get("product_offer_struct_id")
+                    po_elem_id = order_mapping.get("po_struct_element_id")
+                    if po_offer_id is not None and po_struct_id is not None and po_elem_id is not None:
+                        product_key = f"{int(po_offer_id)}:{int(po_struct_id)}:{int(po_elem_id)}"
+                except (ValueError, TypeError):
+                    product_key = None
+
+                # Counts for warning (old links have product_key=NULL)
+                c.execute("SELECT COUNT(*) as cnt FROM links WHERE offer_id=?", (offer_id,))
+                total_links = c.fetchone()["cnt"]
+                c.execute("SELECT COUNT(*) as cnt FROM links WHERE offer_id=? AND product_key IS NULL", (offer_id,))
+                old_links = c.fetchone()["cnt"]
+
+                if product_key:
+                    c.execute("""SELECT COUNT(*) as cnt
+                                  FROM links
+                                  WHERE offer_id=? AND product_key=? AND product_key IS NOT NULL""",
+                              (offer_id, product_key))
+                    eligible_links = c.fetchone()["cnt"]
+
+                    c.execute("""UPDATE links
+                                  SET offer_snapshot_json = ?
+                                  WHERE offer_id = ? AND product_key = ? AND product_key IS NOT NULL""",
+                              (json.dumps(snap, ensure_ascii=False), offer_id, product_key))
+                    updated_count = c.rowcount
+                    if updated_count > 0:
+                        debug_messages.append(
+                            f"✅ Обновлён снимок для {updated_count} ссылок (product_key={product_key}) — "
+                            f"на лендинге отображается текущий состав услуг"
+                        )
+                    elif eligible_links == 0:
+                        debug_messages.append(
+                            f"⚠️ Для этого предложения не найдено ни одной ссылки с product_key={product_key} "
+                            f"(всего ссылок: {total_links})."
+                        )
+                else:
+                    debug_messages.append(
+                        f"⚠️ Не удалось вычислить product_key для предложения (offer_id={offer_id}). "
+                        f"Обновление снимков пропущено."
+                    )
+
+                if old_links > 0:
+                    debug_messages.append(
+                        f"WARNING: {old_links} старых ссылок этого предложения НЕ обновлены (product_key=NULL). "
+                        f"Это ожидаемо: они были созданы до введения привязки по продукту."
+                    )
             
             conn.commit()
             # Store debug messages in session for display on the form
@@ -652,6 +698,19 @@ def upload_new():
             flash("Offer not found.", "danger")
             return redirect(url_for("admin.upload_form"))
 
+        # Product binding key (new links only)
+        # Format: product_offer_id:product_offer_struct_id:po_struct_element_id
+        product_key = None
+        try:
+            om = snap.get("order_mapping") or {}
+            po_offer_id = om.get("product_offer_id")
+            po_struct_id = om.get("product_offer_struct_id")
+            po_elem_id = om.get("po_struct_element_id")
+            if po_offer_id is not None and po_struct_id is not None and po_elem_id is not None:
+                product_key = f"{int(po_offer_id)}:{int(po_struct_id)}:{int(po_elem_id)}"
+        except (ValueError, TypeError):
+            product_key = None
+
         # iterate customers
         created = 0
         row_counter = 0
@@ -788,10 +847,10 @@ def upload_new():
             # insert link row (token to be added after we know link_id)
             created_at = now_iso()
             c.execute("""INSERT INTO links (upload_id, user_id, offer_id, external_id,
-                                            created_at, expires_at, status, offer_snapshot_json, address_json)
-                         VALUES (?, ?, ?, ?, ?, ?, 'NEW', ?, ?)""",
+                                            created_at, expires_at, status, offer_snapshot_json, product_key, address_json)
+                         VALUES (?, ?, ?, ?, ?, ?, 'NEW', ?, ?, ?)""",
                       (upload_id, user_id, offer_id, f"{external_prefix}-{upload_id}-{row_counter}",
-                       created_at, expires_at, json.dumps(snap), json.dumps(address)))
+                       created_at, expires_at, json.dumps(snap), product_key, json.dumps(address)))
             link_id = c.lastrowid
 
             created += 1
@@ -989,17 +1048,73 @@ def update_offer_snapshots(offer_id):
         if not snap:
             flash("Failed to fetch offer snapshot", "danger")
             return redirect(url_for("admin.offers_list"))
-        # Update all links for this offer (any status) so landing always shows current offer data
-        c.execute("""UPDATE links SET offer_snapshot_json = ? WHERE offer_id = ?""",
-                 (json.dumps(snap, ensure_ascii=False), offer_id))
-        updated = c.rowcount
+
+        # Product binding key for this offer.
+        # Old links will have product_key=NULL and must not be touched.
+        order_mapping = snap.get("order_mapping") or {}
+        product_key = None
+        try:
+            po_offer_id = order_mapping.get("product_offer_id")
+            po_struct_id = order_mapping.get("product_offer_struct_id")
+            po_elem_id = order_mapping.get("po_struct_element_id")
+            if po_offer_id is not None and po_struct_id is not None and po_elem_id is not None:
+                product_key = f"{int(po_offer_id)}:{int(po_struct_id)}:{int(po_elem_id)}"
+        except (ValueError, TypeError):
+            product_key = None
+
+        # Counts for warnings
+        c.execute("SELECT COUNT(*) as cnt FROM links WHERE offer_id=?", (offer_id,))
+        total_links = c.fetchone()["cnt"]
+        c.execute("SELECT COUNT(*) as cnt FROM links WHERE offer_id=? AND product_key IS NULL", (offer_id,))
+        old_links = c.fetchone()["cnt"]
+
+        if product_key:
+            c.execute("""SELECT COUNT(*) as cnt FROM links
+                          WHERE offer_id=? AND product_key=? AND product_key IS NOT NULL""",
+                      (offer_id, product_key))
+            eligible_links = c.fetchone()["cnt"]
+
+            c.execute("""UPDATE links
+                          SET offer_snapshot_json = ?
+                          WHERE offer_id = ? AND product_key = ? AND product_key IS NOT NULL""",
+                      (json.dumps(snap, ensure_ascii=False), offer_id, product_key))
+            updated = c.rowcount
+        else:
+            eligible_links = 0
+            updated = 0
+
         conn.commit()
     comps = (snap.get("details") or {}).get("components") or []
     comps_info = f", в снимке: {len(comps)} компонентов ({', '.join(c.get('type', '?') for c in comps) or 'нет'})" if comps is not None else ""
     if updated == 0:
-        flash(f"Обновлено 0 ссылок для этого предложения. Проверьте, что загруженные ссылки созданы именно для предложения (offer_id={offer_id}). Компонентов в предложении: {len(comps)}.", "warning")
+        if old_links > 0:
+            flash(
+                f"Обновлено 0 ссылок для этого предложения. "
+                f"Старые ссылки ({old_links}/{total_links}) не трогаем: у них `product_key=NULL`. "
+                f"Компонентов в предложении: {len(comps)}.",
+                "warning",
+            )
+        else:
+            flash(
+                f"Обновлено 0 ссылок для этого предложения. "
+                f"Возможно, не удалось вычислить product_key или нет новых ссылок с этим ключом. "
+                f"Компонентов в предложении: {len(comps)}.",
+                "warning",
+            )
     else:
-        flash(f"Обновлён снимок для {updated} ссылок{comps_info}. Если на лендинге по-прежнему «Состав не указан» — откройте ссылку с параметром ?debug=1 и проверьте число компонентов.", "success")
+        if old_links > 0:
+            flash(
+                f"Обновлён снимок для {updated} ссылок{comps_info}. "
+                f"Старые ссылки ({old_links}) не обновлены (product_key=NULL, ожидаемо). "
+                f"Откройте лендинг с ?debug=1 для проверки.",
+                "success",
+            )
+        else:
+            flash(
+                f"Обновлён снимок для {updated} ссылок{comps_info}. "
+                f"Если на лендинге по-прежнему «Состав не указан» — откройте ссылку с параметром ?debug=1.",
+                "success",
+            )
     return redirect(url_for("admin.offer_edit", oid=offer_id))
 
 # Resend order API request for a specific link
