@@ -29,6 +29,20 @@ class Config:
     ORDER_API_KEY = os.getenv("ORDER_API_KEY", "")
     ORDER_API_TIMEOUT = int(os.getenv("ORDER_API_TIMEOUT", "10"))
     DB_PATH = os.getenv("DB_PATH")  # used by db.py if provided
+    # Communication API (POST …/communications) — optional; empty COMM_API_URL disables
+    COMM_API_URL = os.getenv("COMM_API_URL", "").strip()
+    COMM_API_KEY = os.getenv("COMM_API_KEY", "").strip()
+    COMM_API_TIMEOUT = int(os.getenv("COMM_API_TIMEOUT", "15"))
+    _ch = os.getenv("COMM_CHANNEL_ID", "").strip()
+    COMM_CHANNEL_ID = int(_ch) if _ch else 0
+    _ct = os.getenv("COMMUNICATION_TYPE_ID", "").strip()
+    COMMUNICATION_TYPE_ID = int(_ct) if _ct else 0
+    _msg = os.getenv("MS_SEGMENT_GROUP_ID", "1").strip()
+    MS_SEGMENT_GROUP_ID = int(_msg) if _msg else 1
+    COMM_CREATE_USER = os.getenv("COMM_CREATE_USER", "LANDING").strip() or "LANDING"
+    COMM_DESCRIPTION_TEST_PREFIX = os.getenv("COMM_DESCRIPTION_TEST_PREFIX", "0").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
 
 
 def validate_config():
@@ -316,6 +330,13 @@ def api_agree():
         traceback.print_exc()
         # Error is already stored in database by create_order_from_offer
 
+    try:
+        create_communication_from_agree(link_id=link["id"])
+    except Exception as e:
+        print("Communication API error:", e)
+        import traceback
+        traceback.print_exc()
+
     return jsonify({"status":"ok", "message":"Consent recorded", "agreed_at": now})
 
 @app.post("/api/reject")
@@ -419,6 +440,13 @@ def agree_page():
         traceback.print_exc()
         # Error is already stored in database by create_order_from_offer
 
+    try:
+        create_communication_from_agree(link_id=link["id"])
+    except Exception as e:
+        print("Communication API error:", e)
+        import traceback
+        traceback.print_exc()
+
     return render_template("accepted.html", offer=offer, when=now, already=False, translations=translations)
 
 
@@ -504,6 +532,210 @@ def _post_order(url: str, payload: dict, timeout: int, idem_key: str):
         }
         return requests.post(url, json=payload, headers=headers, timeout=timeout)
     return _inner()
+
+
+def _post_communication(url: str, payload: dict, timeout: int, idem_key: str):
+    from flask import current_app
+    api_key = (current_app.config.get("COMM_API_KEY") or "").strip() or (
+        current_app.config.get("ORDER_API_KEY") or ""
+    ).strip()
+    if not api_key:
+        raise ValueError("COMM_API_KEY and ORDER_API_KEY are empty")
+
+    @retry(
+        reraise=True,
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=0.5, min=0.5, max=4),
+        retry=retry_if_exception_type((requests.Timeout, requests.ConnectionError)),
+    )
+    def _inner():
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "AUTHORIZATION": f"Bearer {api_key}",
+            "Idempotency-Key": idem_key,
+        }
+        return requests.post(url, json=payload, headers=headers, timeout=timeout)
+
+    return _inner()
+
+
+def create_communication_from_agree(link_id: int):
+    """POST Communication API /communications (потенциальная сделка при нужном COMMUNICATION_TYPE_ID)."""
+    from flask import current_app
+
+    comm_url = (current_app.config.get("COMM_API_URL") or "").strip()
+    if not comm_url:
+        return
+
+    ch_id = int(current_app.config.get("COMM_CHANNEL_ID") or 0)
+    ct_id = int(current_app.config.get("COMMUNICATION_TYPE_ID") or 0)
+    if ch_id <= 0 or ct_id <= 0:
+        with db() as conn:
+            c = conn.cursor()
+            c.execute(
+                """UPDATE links SET communication_response_json=? WHERE id=?""",
+                (
+                    json.dumps(
+                        {
+                            "skipped": True,
+                            "reason": "Set COMM_CHANNEL_ID and COMMUNICATION_TYPE_ID in .env",
+                            "timestamp": datetime.datetime.now().isoformat(),
+                        },
+                        ensure_ascii=False,
+                    ),
+                    link_id,
+                ),
+            )
+            conn.commit()
+        return
+
+    with db() as conn:
+        c = conn.cursor()
+        c.execute(
+            """SELECT l.*, u.filial_id, u.customer_account_id, u.phone, u.customer_id,
+                      u.id AS uid
+               FROM links l
+               JOIN users u ON u.id = l.user_id
+               WHERE l.id=?""",
+            (link_id,),
+        )
+        row = c.fetchone()
+        if not row:
+            return
+        row_dict = dict(row)
+        offer = json.loads(row_dict["offer_snapshot_json"] or "{}")
+
+        cust_id = row_dict.get("customer_id")
+        try:
+            cust_id_int = int(cust_id) if cust_id is not None and str(cust_id).strip() != "" else None
+        except (TypeError, ValueError):
+            cust_id_int = None
+        if cust_id_int is None or cust_id_int <= 0:
+            c.execute(
+                """UPDATE links SET communication_response_json=? WHERE id=?""",
+                (
+                    json.dumps(
+                        {
+                            "skipped": True,
+                            "reason": "customer_id is missing or invalid (add customer_id to segment upload)",
+                            "timestamp": datetime.datetime.now().isoformat(),
+                        },
+                        ensure_ascii=False,
+                    ),
+                    link_id,
+                ),
+            )
+            conn.commit()
+            return
+
+        base_external = row_dict.get("external_id") or f"LNK-{link_id}"
+        ext_comm = f"{base_external}-COMM"
+
+        phone = row_dict.get("phone")
+        if phone:
+            phone_str = str(phone).strip()
+            if phone_str.endswith(".0"):
+                phone_str = phone_str[:-2]
+            comm_addr = phone_str
+        else:
+            comm_addr = ""
+
+        desc_parts = []
+        if current_app.config.get("COMM_DESCRIPTION_TEST_PREFIX"):
+            desc_parts.append("[TEST]")
+        desc_parts.append(
+            f"Лендинг: согласие на «{offer.get('title', '')}» ({offer.get('bundle', '')})"
+        )
+        desc_parts.append(f"link_id={link_id} external_id={base_external}")
+        description = " ".join(desc_parts)
+
+        ca_raw = row_dict.get("customer_account_id")
+        ca_id = int(ca_raw) if ca_raw is not None and str(ca_raw).strip() != "" else -1
+
+        payload = {
+            "CUSTOMER_ID": cust_id_int,
+            "CUSTOMER_ACCOUNT_ID": ca_id,
+            "COMM_CHANNEL_ID": ch_id,
+            "DESCRIPTION": description,
+            "COMM_ADDR": comm_addr,
+            "CUSTOMER_COMM_ADDR_ID": -1,
+            "EXTERNAL_ID": ext_comm,
+            "COMMUNICATION_TYPE_ID": ct_id,
+            "MS_SEGMENT_GROUP_ID": int(current_app.config.get("MS_SEGMENT_GROUP_ID") or 1),
+            "CREATE_USER": current_app.config.get("COMM_CREATE_USER") or "LANDING",
+        }
+
+        request_data = {
+            "url": comm_url,
+            "method": "POST",
+            "payload": payload,
+            "timestamp": datetime.datetime.now().isoformat(),
+        }
+        timeout = int(current_app.config.get("COMM_API_TIMEOUT") or 15)
+
+        try:
+            r = _post_communication(comm_url, payload, timeout, idem_key=f"link-comm-{link_id}")
+            response_json = None
+            try:
+                response_json = r.json()
+            except (ValueError, AttributeError):
+                pass
+
+            success = False
+            comm_id = None
+            if isinstance(response_json, dict):
+                err = response_json.get("ERR_CODE", response_json.get("errCode"))
+                data = response_json.get("DATA") or response_json.get("data")
+                if isinstance(data, dict):
+                    comm_id = data.get("COMMUNICATION_ID", data.get("communicationId"))
+                if err == 0 and r.status_code < 400:
+                    success = True
+
+            response_data = {
+                "request": request_data,
+                "status_code": r.status_code,
+                "response_text": r.text,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "success": success,
+            }
+            if response_json:
+                response_data["response_json"] = response_json
+            if comm_id is not None:
+                response_data["communication_id"] = comm_id
+
+            c.execute(
+                "UPDATE links SET communication_response_json=? WHERE id=?",
+                (json.dumps(response_data, ensure_ascii=False), link_id),
+            )
+            conn.commit()
+            r.raise_for_status()
+        except Exception as e:
+            error_data = {
+                "request": request_data,
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "timestamp": datetime.datetime.now().isoformat(),
+                "success": False,
+            }
+            try:
+                c.execute(
+                    "UPDATE links SET communication_response_json=? WHERE id=?",
+                    (json.dumps(error_data, ensure_ascii=False), link_id),
+                )
+                conn.commit()
+            except Exception as db_err:
+                print(f"Failed to store communication error: {db_err}")
+                try:
+                    with db() as conn2:
+                        c2 = conn2.cursor()
+                        c2.execute(
+                            "UPDATE links SET communication_response_json=? WHERE id=?",
+                            (json.dumps(error_data, ensure_ascii=False), link_id),
+                        )
+                        conn2.commit()
+                except Exception:
+                    pass
 
 
 def create_order_from_offer(link_id: int):

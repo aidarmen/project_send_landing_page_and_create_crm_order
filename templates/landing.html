@@ -284,7 +284,11 @@
           {% if customer_account_id or address %}
             <div class="mb-6 pb-6 border-b border-gray-200">
               <h3 class="text-sm font-semibold text-gray-700 mb-3">
-                {% if serpin_hero %}Данные абонента{% else %}{{ translations.your_data }}{% endif %}
+                {% if serpin_hero %}
+                  {% if current_lang == 'kk' %}Абонент деректері{% else %}Данные абонента{% endif %}
+                {% else %}
+                  {{ translations.your_data }}
+                {% endif %}
               </h3>
               <div class="space-y-2 text-sm">
                 {% if customer_account_id %}
@@ -330,17 +334,29 @@
 
               <div class="flex items-center gap-2">
                 <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-                <span>{{ mobile.get('data_gb') or 40 }} ГБ интернет для соцсетей и видео</span>
+                <span>
+                  {% if current_lang == 'kk' %}
+                    {{ mobile.get('data_gb') or 40 }} ГБ әлеуметтік желілер мен видеоға арналған интернет
+                  {% else %}
+                    {{ mobile.get('data_gb') or 40 }} ГБ интернет для соцсетей и видео
+                  {% endif %}
+                </span>
               </div>
 
               <div class="flex items-center gap-2">
                 <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-                <span>Звонки без ограничений внутри сети</span>
+                <span>{% if current_lang == 'kk' %}Желі ішінде шектеусіз қоңыраулар{% else %}Звонки без ограничений внутри сети{% endif %}</span>
               </div>
 
               <div class="flex items-center gap-2">
                 <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-                <span>{{ mobile.get('offnet_minutes') or 250 }} минут на другие операторы</span>
+                <span>
+                  {% if current_lang == 'kk' %}
+                    {{ mobile.get('offnet_minutes') or 250 }} минут басқа операторларға
+                  {% else %}
+                    {{ mobile.get('offnet_minutes') or 250 }} минут на другие операторы
+                  {% endif %}
+                </span>
               </div>
 
               <div class="flex items-center gap-2">
@@ -351,7 +367,7 @@
               {% if has_tv %}
                 <div class="flex items-center gap-2">
                   <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-                  <span>TV+ Free в подписке</span>
+                  <span>{% if current_lang == 'kk' %}Жазылымда TV+ Free{% else %}TV+ Free в подписке{% endif %}</span>
                 </div>
               {% endif %}
             {% else %}
@@ -376,14 +392,22 @@
             <div class="flex items-center gap-2 mb-3">
               <input type="checkbox" id="agree" class="h-5 w-5">
               <label for="agree" class="text-gray-700 text-sm">
-                {% if serpin_hero %}Я прочитал условия{% else %}{{ translations.read_and_agree }}{% endif %}
+                {% if serpin_hero %}
+                  {% if current_lang == 'kk' %}Мен шарттарды оқыдым{% else %}Я прочитал условия{% endif %}
+                {% else %}
+                  {{ translations.read_and_agree }}
+                {% endif %}
               </label>
             </div>
             <button id="acceptBtn"
                     class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-extrabold text-white bg-gray-400"
                     disabled>
               <i data-feather="check-circle"></i>
-              {% if serpin_hero %}Я прочитал условия и подключаю{% else %}{{ translations.agree }}{% endif %}
+              {% if serpin_hero %}
+                {% if current_lang == 'kk' %}Мен шарттарды оқыдым және қосыламын{% else %}Я прочитал условия и подключаю{% endif %}
+              {% else %}
+                {{ translations.agree }}
+              {% endif %}
             </button>
           </form>
 
@@ -398,7 +422,7 @@
 
           <p class="text-xs text-gray-500 mt-4">
             {% if serpin_hero %}
-            Подключение производится официально на лицевой счёт абонента
+              {% if current_lang == 'kk' %}Қосылу абоненттің жеке шотына ресми түрде жүргізіледі{% else %}Подключение производится официально на лицевой счёт абонента{% endif %}
             {% elif baige_hero %}
             {{ translations.consent_fine_print_baige }}
             {% else %}
@@ -408,8 +432,13 @@
 
           {% if serpin_hero %}
           <p class="text-xs text-gray-600 mt-2">
-            Есть вопросы? Напишите нам в
-            <a href="https://wa.me/77782474079" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-semibold">WhatsApp</a>
+            {% if current_lang == 'kk' %}
+              Сұрақтарыңыз бар ма? Бізге
+              <a href="https://wa.me/77782474079" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-semibold">WhatsApp</a>-қа жазыңыз
+            {% else %}
+              Есть вопросы? Напишите нам в
+              <a href="https://wa.me/77782474079" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-semibold">WhatsApp</a>
+            {% endif %}
           </p>
           {% endif %}
         </div>
@@ -468,36 +497,46 @@
   {% if serpin_hero %}
   <section class="py-12 bg-white border-t border-gray-100">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">Что вы получаете</h2>
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">
+        {% if current_lang == 'kk' %}Сіз не аласыз{% else %}Что вы получаете{% endif %}
+      </h2>
 
       <div class="bg-[#008EFE]/5 border border-[#008EFE]/20 rounded-2xl p-6 mb-8">
         <div class="text-lg font-extrabold text-gray-900 mb-4">
-          Мобильная связь, которой хватает на всё
+          {% if current_lang == 'kk' %}Бәріне жететін мобильді байланыс{% else %}Мобильная связь, которой хватает на всё{% endif %}
         </div>
 
         <div class="space-y-3">
           <div class="flex items-start gap-3">
             <div class="w-10 flex-shrink-0 text-center text-2xl leading-none">📱</div>
             <div class="flex-1">
-              <div class="font-semibold text-gray-900">Интернет для соцсетей и видео</div>
+              <div class="font-semibold text-gray-900">
+                {% if current_lang == 'kk' %}Әлеуметтік желілер мен видеоға арналған интернет{% else %}Интернет для соцсетей и видео{% endif %}
+              </div>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <div class="w-10 flex-shrink-0 text-center text-2xl leading-none">📞</div>
             <div class="flex-1">
-              <div class="font-semibold text-gray-900">Звонки без ограничений внутри сети</div>
+              <div class="font-semibold text-gray-900">
+                {% if current_lang == 'kk' %}Желі ішінде шектеусіз қоңыраулар{% else %}Звонки без ограничений внутри сети{% endif %}
+              </div>
             </div>
           </div>
           <div class="flex items-start gap-3">
             <div class="w-10 flex-shrink-0 text-center text-2xl leading-none">💬</div>
             <div class="flex-1">
-              <div class="font-semibold text-gray-900">Сообщения и связь с близкими</div>
+              <div class="font-semibold text-gray-900">
+                {% if current_lang == 'kk' %}Жақындарыңызбен хабарламалар және байланыс{% else %}Сообщения и связь с близкими{% endif %}
+              </div>
             </div>
           </div>
         </div>
 
         <div class="mt-6 pt-5 border-t border-gray-200">
-          <div class="text-sm font-semibold text-gray-900 mb-3">Работает на сети</div>
+          <div class="text-sm font-semibold text-gray-900 mb-3">
+            {% if current_lang == 'kk' %}Желіде жұмыс істейді{% else %}Работает на сети{% endif %}
+          </div>
           <div class="flex items-center gap-6 flex-wrap">
             <div class="flex flex-col items-center">
               <div class="w-[124px] h-[42px] overflow-hidden rounded-full bg-white/10 flex items-center justify-center">
@@ -511,7 +550,7 @@
             </div>
           </div>
           <div class="mt-4 text-sm text-gray-600">
-            При переходе от другого оператора номер сохраняется
+            {% if current_lang == 'kk' %}Басқа оператордан ауысқанда нөмір сақталады{% else %}При переходе от другого оператора номер сохраняется{% endif %}
           </div>
         </div>
       </div>
@@ -523,36 +562,54 @@
         <li class="flex gap-4 items-start">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">1</span>
           <div>
-            <h3 class="font-bold text-gray-900">{{ (mobile.get('data_gb') or 40) }} ГБ мобильного интернета</h3>
-            <p class="text-gray-600 mt-1">Для видео, соцсетей и приложений</p>
+            <h3 class="font-bold text-gray-900">
+              {% if current_lang == 'kk' %}{{ (mobile.get('data_gb') or 40) }} ГБ ұялы интернет{% else %}{{ (mobile.get('data_gb') or 40) }} ГБ мобильного интернета{% endif %}
+            </h3>
+            <p class="text-gray-600 mt-1">
+              {% if current_lang == 'kk' %}Видеоға, әлеуметтік желілерге және қолданбаларға{% else %}Для видео, соцсетей и приложений{% endif %}
+            </p>
           </div>
         </li>
         <li class="flex gap-4 items-start">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">2</span>
           <div>
-            <h3 class="font-bold text-gray-900">Звонки без ограничений внутри сети</h3>
-            <p class="text-gray-600 mt-1">Общайтесь без лимитов</p>
+            <h3 class="font-bold text-gray-900">
+              {% if current_lang == 'kk' %}Желі ішінде шектеусіз қоңыраулар{% else %}Звонки без ограничений внутри сети{% endif %}
+            </h3>
+            <p class="text-gray-600 mt-1">
+              {% if current_lang == 'kk' %}Лимитсіз сөйлесіңіз{% else %}Общайтесь без лимитов{% endif %}
+            </p>
           </div>
         </li>
         <li class="flex gap-4 items-start">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">3</span>
           <div>
-            <h3 class="font-bold text-gray-900">{{ (mobile.get('offnet_minutes') or 250) }} минут на другие операторы</h3>
-            <p class="text-gray-600 mt-1">Звоните на любые номера</p>
+            <h3 class="font-bold text-gray-900">
+              {% if current_lang == 'kk' %}{{ (mobile.get('offnet_minutes') or 250) }} минут басқа операторларға{% else %}{{ (mobile.get('offnet_minutes') or 250) }} минут на другие операторы{% endif %}
+            </h3>
+            <p class="text-gray-600 mt-1">
+              {% if current_lang == 'kk' %}Кез келген нөмірге қоңырау шалыңыз{% else %}Звоните на любые номера{% endif %}
+            </p>
           </div>
         </li>
         <li class="flex gap-4 items-start">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">4</span>
           <div>
-            <h3 class="font-bold text-gray-900">{{ (mobile.get('sms') or 100) }} SMS</h3>
-            <p class="text-gray-600 mt-1">Для сообщений, когда это нужно</p>
+            <h3 class="font-bold text-gray-900">
+              {% if current_lang == 'kk' %}{{ (mobile.get('sms') or 100) }} SMS{% else %}{{ (mobile.get('sms') or 100) }} SMS{% endif %}
+            </h3>
+            <p class="text-gray-600 mt-1">
+              {% if current_lang == 'kk' %}Қажет кезде хабарламаларға{% else %}Для сообщений, когда это нужно{% endif %}
+            </p>
           </div>
         </li>
         <li class="flex gap-4 items-start">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">5</span>
           <div>
             <h3 class="font-bold text-gray-900">TV+ Free</h3>
-            <p class="text-gray-600 mt-1">Телевидение в вашем смартфоне</p>
+            <p class="text-gray-600 mt-1">
+              {% if current_lang == 'kk' %}Смартфоныңызда ТВ{% else %}Телевидение в вашем смартфоне{% endif %}
+            </p>
           </div>
         </li>
       </ul>
@@ -574,7 +631,9 @@
           <!-- Информация о клиенте -->
           {% if customer_account_id or address %}
           <div class="mb-6 pb-6 border-b border-gray-200">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3">Данные абонента</h3>
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">
+              {% if current_lang == 'kk' %}Абонент деректері{% else %}Данные абонента{% endif %}
+            </h3>
             <div class="space-y-2 text-sm">
               {% if customer_account_id %}
               <div class="flex justify-between items-center">
@@ -620,24 +679,36 @@
           <div class="space-y-3 text-sm">
             <div class="flex items-center gap-2">
               <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-              <span>{{ mobile.get('data_gb') or 40 }} ГБ интернет для соцсетей и видео</span>
+              <span>
+                {% if current_lang == 'kk' %}
+                  {{ mobile.get('data_gb') or 40 }} ГБ әлеуметтік желілер мен видеоға арналған интернет
+                {% else %}
+                  {{ mobile.get('data_gb') or 40 }} ГБ интернет для соцсетей и видео
+                {% endif %}
+              </span>
             </div>
             <div class="flex items-center gap-2">
               <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-              <span>Звонки без ограничений внутри сети</span>
+              <span>{% if current_lang == 'kk' %}Желі ішінде шектеусіз қоңыраулар{% else %}Звонки без ограничений внутри сети{% endif %}</span>
             </div>
             <div class="flex items-center gap-2">
               <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-              <span>{{ mobile.get('offnet_minutes') or 250 }} минут на другие операторы</span>
+              <span>
+                {% if current_lang == 'kk' %}
+                  {{ mobile.get('offnet_minutes') or 250 }} минут басқа операторларға
+                {% else %}
+                  {{ mobile.get('offnet_minutes') or 250 }} минут на другие операторы
+                {% endif %}
+              </span>
             </div>
             <div class="flex items-center gap-2">
               <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-              <span>{{ mobile.get('sms') or 100 }} SMS</span>
+              <span>{% if current_lang == 'kk' %}{{ mobile.get('sms') or 100 }} SMS{% else %}{{ mobile.get('sms') or 100 }} SMS{% endif %}</span>
             </div>
             {% if has_tv %}
             <div class="flex items-center gap-2">
               <img src="/static/images/Success_Checkmark_Illustration.png" alt="✓" class="w-6 h-6 flex-shrink-0 object-contain">
-              <span>TV+ Free в подписке</span>
+              <span>{% if current_lang == 'kk' %}Жазылымда TV+ Free{% else %}TV+ Free в подписке{% endif %}</span>
             </div>
             {% endif %}
           </div>
@@ -646,19 +717,29 @@
             <input type="hidden" name="token" value="{{ token }}">
             <div class="flex items-center gap-2 mb-3">
               <input type="checkbox" id="agree" class="h-5 w-5">
-              <label for="agree" class="text-gray-700 text-sm">Я прочитал условия</label>
+              <label for="agree" class="text-gray-700 text-sm">
+                {% if current_lang == 'kk' %}Мен шарттарды оқыдым{% else %}Я прочитал условия{% endif %}
+              </label>
             </div>
             <button id="acceptBtn"
                     class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-extrabold text-white bg-gray-400"
                     disabled>
-              <i data-feather="check-circle"></i> Я прочитал условия и подключаю
+              <i data-feather="check-circle"></i>
+              {% if current_lang == 'kk' %}Мен шарттарды оқыдым және қосыламын{% else %}Я прочитал условия и подключаю{% endif %}
             </button>
           </form>
 
-          <p class="text-xs text-gray-500 mt-4">Подключение производится официально на лицевой счёт абонента</p>
+          <p class="text-xs text-gray-500 mt-4">
+            {% if current_lang == 'kk' %}Қосылу абоненттің жеке шотына ресми түрде жүргізіледі{% else %}Подключение производится официально на лицевой счёт абонента{% endif %}
+          </p>
           <p class="text-xs text-gray-600 mt-2">
-            Есть вопросы? Напишите нам в
-            <a href="https://wa.me/77782474079" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-semibold">WhatsApp</a>
+            {% if current_lang == 'kk' %}
+              Сұрақтарыңыз бар ма? Бізге
+              <a href="https://wa.me/77782474079" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-semibold">WhatsApp</a>-қа жазыңыз
+            {% else %}
+              Есть вопросы? Напишите нам в
+              <a href="https://wa.me/77782474079" target="_blank" rel="noopener noreferrer" class="text-blue-700 font-semibold">WhatsApp</a>
+            {% endif %}
           </p>
         </div>
       </aside>
@@ -670,24 +751,28 @@
   <section class="py-12 bg-gray-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {% if serpin_hero %}
-        <h2 class="text-2xl font-extrabold text-gray-900 mb-2 text-center">Как подключить</h2>
-        <p class="text-gray-600 text-center mb-8">Подтвердите подключение на сайте — с вами свяжется специалист.</p>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-2 text-center">
+          {% if current_lang == 'kk' %}Қалай қосуға болады{% else %}Как подключить{% endif %}
+        </h2>
+        <p class="text-gray-600 text-center mb-8">
+          {% if current_lang == 'kk' %}Сайтта қосылуды растаңыз — маман сізбен байланысады.{% else %}Подтвердите подключение на сайте — с вами свяжется специалист.{% endif %}
+        </p>
         <ol class="space-y-4">
           <li class="flex gap-3 items-center">
             <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
-            <span>Подтвердите подключение на сайте</span>
+            <span>{% if current_lang == 'kk' %}Сайтта қосылуды растаңыз{% else %}Подтвердите подключение на сайте{% endif %}</span>
           </li>
           <li class="flex gap-3 items-center">
             <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">2</span>
-            <span>С вами свяжется специалист для подтверждения</span>
+            <span>{% if current_lang == 'kk' %}Растау үшін маман сізбен байланысады{% else %}С вами свяжется специалист для подтверждения{% endif %}</span>
           </li>
           <li class="flex gap-3 items-center">
             <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">3</span>
-            <span>SIM-карта будет оформлена на ваш лицевой счет</span>
+            <span>{% if current_lang == 'kk' %}SIM-карта сіздің жеке шотыңызға рәсімделеді{% else %}SIM-карта будет оформлена на ваш лицевой счет{% endif %}</span>
           </li>
           <li class="flex gap-3 items-center">
             <span class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">4</span>
-            <span>Начните пользоваться тарифом Serpin. Быстро и без лишних шагов</span>
+            <span>{% if current_lang == 'kk' %}Serpin тарифін пайдалануды бастаңыз. Жылдам әрі артық қадамсыз{% else %}Начните пользоваться тарифом Serpin. Быстро и без лишних шагов{% endif %}</span>
           </li>
         </ol>
       {% else %}
@@ -723,7 +808,9 @@
   <!-- Что входит: эмблемки (интернет/ТВ/связь) -->
   <section class="py-12 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">Что входит</h2>
+      <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">
+        {% if current_lang == 'kk' %}Не кіреді{% else %}Что входит{% endif %}
+      </h2>
       {% set mobile_list = comps|selectattr('type', 'equalto', 'mobile')|list %}
       {% set sim_list = comps|selectattr('type', 'equalto', 'sim_devices')|list %}
       {% set mobile = (mobile_list|length > 0) and mobile_list[0] or ((sim_list|length > 0) and sim_list[0] or {}) %}
@@ -734,14 +821,18 @@
         <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm min-w-[160px] sm:min-w-[180px]">
           <img src="/static/images/Internet_Service_Icon_IIlustration.png" alt="Интернет" class="mx-auto w-12 h-12 sm:w-14 sm:h-14 mb-3">
           <div class="text-gray-900 font-bold text-lg">{{ mobile.get('data_gb') or 40 }} ГБ</div>
-          <div class="text-gray-600 text-sm">Интернет для соцсетей и видео</div>
+          <div class="text-gray-600 text-sm">
+            {% if current_lang == 'kk' %}Әлеуметтік желілер мен видеоға арналған интернет{% else %}Интернет для соцсетей и видео{% endif %}
+          </div>
         </div>
 
         {% if has_tv %}
         <div class="p-6 rounded-xl text-center bg-white/10 backdrop-blur-sm min-w-[160px] sm:min-w-[180px]">
           <img src="/static/images/TV_Service_Icon_Illustration.png" alt="ТВ" class="mx-auto w-12 h-12 sm:w-14 sm:h-14 mb-3">
           <div class="text-gray-900 font-bold text-lg">TV+ Free</div>
-          <div class="text-gray-600 text-sm">Телевидение в смартфоне</div>
+          <div class="text-gray-600 text-sm">
+            {% if current_lang == 'kk' %}Смартфоныңызда ТВ{% else %}Телевидение в смартфоне{% endif %}
+          </div>
         </div>
         {% endif %}
 
@@ -751,7 +842,7 @@
             {{ mobile.get('offnet_minutes') or 250 }} мин
           </div>
           <div class="text-gray-600 text-sm">
-            и {{ mobile.get('sms') or 100 }} SMS
+            {% if current_lang == 'kk' %}және {{ mobile.get('sms') or 100 }} SMS{% else %}и {{ mobile.get('sms') or 100 }} SMS{% endif %}
           </div>
         </div>
       </div>
@@ -763,51 +854,57 @@
   <section class="py-12 bg-white border-t border-gray-100">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
       {% if serpin_hero %}
-        <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">Вопросы и ответы</h2>
+        <h2 class="text-2xl font-extrabold text-gray-900 mb-8 text-center">
+          {% if current_lang == 'kk' %}Сұрақтар мен жауаптар{% else %}Вопросы и ответы{% endif %}
+        </h2>
         <div class="space-y-2">
           <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
             <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden">
-              Хватит ли 40 ГБ интернета?
+              {% if current_lang == 'kk' %}40 ГБ интернет жеткілікті ме?{% else %}Хватит ли 40 ГБ интернета?{% endif %}
               <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span>
             </summary>
             <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">
-              Да. Этого объёма достаточно для соцсетей, видео и повседневного использования.
+              {% if current_lang == 'kk' %}
+                Иә. Бұл көлем әлеуметтік желілерге, видеоға және күнделікті қолдануға жеткілікті.
+              {% else %}
+                Да. Этого объёма достаточно для соцсетей, видео и повседневного использования.
+              {% endif %}
             </div>
           </details>
           <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
             <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden">
-              Можно ли раздавать интернет?
+              {% if current_lang == 'kk' %}Интернетті таратуға бола ма?{% else %}Можно ли раздавать интернет?{% endif %}
               <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span>
             </summary>
             <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">
-              Да, интернет можно использовать в режиме модема.
+              {% if current_lang == 'kk' %}Иә, интернетті модем режимінде пайдалануға болады.{% else %}Да, интернет можно использовать в режиме модема.{% endif %}
             </div>
           </details>
           <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
             <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden">
-              Когда подключится тариф?
+              {% if current_lang == 'kk' %}Тариф қашан қосылады?{% else %}Когда подключится тариф?{% endif %}
               <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span>
             </summary>
             <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">
-              С вами свяжется наш специалист и обговорит все условия получения.
+              {% if current_lang == 'kk' %}Біздің маман сізбен байланысып, алу шарттарын талқылайды.{% else %}С вами свяжется наш специалист и обговорит все условия получения.{% endif %}
             </div>
           </details>
           <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
             <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden">
-              Можно ли сохранить свой номер?
+              {% if current_lang == 'kk' %}Нөмірді сақтауға бола ма?{% else %}Можно ли сохранить свой номер?{% endif %}
               <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span>
             </summary>
             <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">
-              Да, номер остаётся без изменений.
+              {% if current_lang == 'kk' %}Иә, нөмір өзгеріссіз қалады.{% else %}Да, номер остаётся без изменений.{% endif %}
             </div>
           </details>
           <details class="faq-item border border-gray-200 rounded-lg overflow-hidden">
             <summary class="px-4 py-3 font-medium text-gray-900 bg-gray-50 hover:bg-gray-100 cursor-pointer list-none flex justify-between items-center [&::-webkit-details-marker]:hidden">
-              Как получить SIM-карту?
+              {% if current_lang == 'kk' %}SIM-картаны қалай алуға болады?{% else %}Как получить SIM-карту?{% endif %}
               <span class="text-gray-500 faq-plus">+</span><span class="text-gray-500 faq-minus">−</span>
             </summary>
             <div class="px-4 py-3 bg-white border-t border-gray-100 text-gray-600 text-sm">
-              SIM-карту можно получить в ближайшем отделении или оформить доставку.
+              {% if current_lang == 'kk' %}SIM-картаны жақын бөлімшеден алуға немесе жеткізуді рәсімдеуге болады.{% else %}SIM-карту можно получить в ближайшем отделении или оформить доставку.{% endif %}
             </div>
           </details>
         </div>

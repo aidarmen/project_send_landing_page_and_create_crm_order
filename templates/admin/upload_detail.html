@@ -32,6 +32,7 @@
       <th>Отказ</th>
       <th>Ссылка</th>
       <th>ORDER_ID</th>
+      <th>COMM_ID</th>
       <th>Payload</th>
       <th>Ответ API</th>
     </tr>
@@ -60,6 +61,13 @@
       <td>
         {% if r.get("order_id") %}
           <strong>{{ r["order_id"] }}</strong>
+        {% else %}
+          <span class="text-muted">-</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if r.get("communication_id") %}
+          <strong>{{ r["communication_id"] }}</strong>
         {% else %}
           <span class="text-muted">-</span>
         {% endif %}

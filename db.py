@@ -119,6 +119,18 @@ def init_db():
         except sqlite3.OperationalError:
             pass  # Column already exists
 
+        # CRM customer id (from segment upload) — optional
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN customer_id INTEGER")
+        except sqlite3.OperationalError:
+            pass
+
+        # Communication API response (potential deal / communication)
+        try:
+            c.execute("ALTER TABLE links ADD COLUMN communication_response_json TEXT")
+        except sqlite3.OperationalError:
+            pass
+
         # consents (audit trail)
         c.execute("""
         CREATE TABLE IF NOT EXISTS consents (

@@ -642,7 +642,14 @@ def upload_new():
             available_cols += f", ... ({len(df.columns)} total columns)"
         flash(f"File must contain 'filial_id' column. Found columns: {available_cols}", "danger")
         return redirect(url_for("admin.upload_form"))
-    
+
+    # Optional: CRM CUSTOMER_ID (для Communication API / потенциальная сделка)
+    customer_id_col = None
+    for col in df.columns:
+        if col.lower().strip() == "customer_id":
+            customer_id_col = col
+            break
+
     # Check for required address columns in file
     address_columns = {
         "town_name": "TOWN_NAME",
@@ -826,9 +833,25 @@ def upload_new():
                     if phone_str.endswith('.0'):
                         phone_str = phone_str[:-2]
                     phone = phone_str
-            
+
+            parsed_customer_id = None
+            if customer_id_col:
+                cv = row_data.get(customer_id_col)
+                if pd.notna(cv) and str(cv).strip() and str(cv).strip().lower() not in (
+                    "nan", "none", "null", "",
+                ):
+                    try:
+                        parsed_customer_id = int(float(str(cv).strip()))
+                    except (ValueError, TypeError):
+                        parsed_customer_id = None
+                    if parsed_customer_id is not None and parsed_customer_id <= 0:
+                        parsed_customer_id = None
+
             # find or create user by customer_account_id
-            c.execute("SELECT id, filial_id, phone FROM users WHERE customer_account_id=?", (customer_account_id,))
+            c.execute(
+                "SELECT id, filial_id, phone, customer_id FROM users WHERE customer_account_id=?",
+                (customer_account_id,),
+            )
             u = c.fetchone()
             if u:
                 user_id = u["id"]
@@ -838,10 +861,14 @@ def upload_new():
                 # Update phone if provided and different
                 if phone and u["phone"] != phone:
                     c.execute("UPDATE users SET phone=? WHERE id=?", (phone, user_id))
+                if parsed_customer_id is not None and u["customer_id"] != parsed_customer_id:
+                    c.execute("UPDATE users SET customer_id=? WHERE id=?", (parsed_customer_id, user_id))
             else:
-                c.execute("""INSERT INTO users (name, phone, email, filial_id, customer_account_id)
-                             VALUES (?, ?, ?, ?, ?)""",
-                          (None, phone, None, filial_id, customer_account_id))
+                c.execute(
+                    """INSERT INTO users (name, phone, email, filial_id, customer_account_id, customer_id)
+                       VALUES (?, ?, ?, ?, ?, ?)""",
+                    (None, phone, None, filial_id, customer_account_id, parsed_customer_id),
+                )
                 user_id = c.lastrowid
 
             # insert link row (token to be added after we know link_id)
@@ -891,7 +918,7 @@ def upload_detail(upload_id):
         if not batch: abort(404)
 
         c.execute("""
-          SELECT l.*, u.customer_account_id, u.phone, l.order_response_json
+          SELECT l.*, u.customer_account_id, u.phone
           FROM links l JOIN users u ON u.id=l.user_id
           WHERE l.upload_id=? ORDER BY l.id ASC
         """, (upload_id,))
@@ -928,7 +955,23 @@ def upload_detail(upload_id):
             else:
                 row_dict["order_response"] = None
                 row_dict["order_id"] = None
-            
+
+            comm_response_json = row_dict.get("communication_response_json")
+            row_dict["communication_id"] = None
+            row_dict["communication_response"] = None
+            if comm_response_json and str(comm_response_json).strip():
+                try:
+                    cresp = json.loads(comm_response_json)
+                    row_dict["communication_response"] = cresp
+                    if cresp.get("response_json") and isinstance(cresp["response_json"], dict):
+                        data = cresp["response_json"].get("DATA") or cresp["response_json"].get("data")
+                        if isinstance(data, dict):
+                            row_dict["communication_id"] = data.get("COMMUNICATION_ID", data.get("communicationId"))
+                    if row_dict["communication_id"] is None and cresp.get("communication_id") is not None:
+                        row_dict["communication_id"] = cresp.get("communication_id")
+                except (json.JSONDecodeError, TypeError):
+                    row_dict["communication_response"] = {"error": "parse failed", "raw": str(comm_response_json)[:200]}
+
             # Generate URL
             if row_dict.get("token"):
                 # Use BASE_URL from config if available, otherwise fall back to request.url_root
@@ -959,7 +1002,8 @@ def upload_download_csv(upload_id):
         c = conn.cursor()
         c.execute("""
           SELECT l.id, u.customer_account_id, l.external_id, l.created_at, l.expires_at, l.status,
-                 l.opened_at, l.agreed_at, l.rejected_at, l.token, u.phone, l.order_response_json
+                 l.opened_at, l.agreed_at, l.rejected_at, l.token, u.phone, l.order_response_json,
+                 l.communication_response_json
           FROM links l JOIN users u ON u.id=l.user_id
           WHERE l.upload_id=?
           ORDER BY l.id
@@ -972,7 +1016,7 @@ def upload_download_csv(upload_id):
 
     w = csv.writer(out, delimiter=";", lineterminator="\r\n")
     w.writerow(["link_id","customer_account_id","external_id","created_at","expires_at",
-                "status","opened_at","agreed_at","rejected_at","order_id","url"])
+                "status","opened_at","agreed_at","rejected_at","order_id","communication_id","url"])
 
     # Use BASE_URL from config if available, otherwise fall back to request.url_root
     try:
@@ -1006,9 +1050,24 @@ def upload_download_csv(upload_id):
                     order_id = resp["response_json"].get("ORDER_ID", "")
             except (json.JSONDecodeError, TypeError):
                 pass
-        
+
+        communication_id = ""
+        crj = r_dict.get("communication_response_json")
+        if crj:
+            try:
+                cresp = json.loads(crj)
+                if cresp.get("response_json") and isinstance(cresp["response_json"], dict):
+                    data = cresp["response_json"].get("DATA") or cresp["response_json"].get("data")
+                    if isinstance(data, dict):
+                        communication_id = data.get("COMMUNICATION_ID", data.get("communicationId", ""))
+                if not communication_id and cresp.get("communication_id") is not None:
+                    communication_id = cresp.get("communication_id", "")
+            except (json.JSONDecodeError, TypeError):
+                pass
+
         w.writerow([r_dict["id"], r_dict["customer_account_id"], r_dict["external_id"], r_dict["created_at"],
-                    r_dict["expires_at"], r_dict["status"], r_dict["opened_at"], r_dict["agreed_at"], r_dict["rejected_at"], order_id, url])
+                    r_dict["expires_at"], r_dict["status"], r_dict["opened_at"], r_dict["agreed_at"],
+                    r_dict["rejected_at"], order_id, communication_id, url])
 
     mem = io.BytesIO(out.getvalue().encode("utf-8-sig"))
     return send_file(mem, mimetype="text/csv", as_attachment=True,
