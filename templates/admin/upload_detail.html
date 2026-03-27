@@ -91,22 +91,31 @@
         {% endif %}
       </td>
       <td>
-        {% if r.get("order_response") %}
-          <div class="d-flex gap-1">
-            <button type="button" class="btn btn-sm btn-info" onclick="toggleResponse({{ r['id'] }})">
-              Показать
-            </button>
-            {% if not r['order_response'].get('success') %}
-              <form method="post" action="{{ url_for('admin.resend_order', link_id=r['id']) }}" style="display:inline" onsubmit="return confirm('Повторно отправить заказ?');">
-                <button type="submit" class="btn btn-sm btn-warning">Повторить</button>
-              </form>
+        {% if r.get("order_response") or r.get("communication_response") %}
+          <div class="d-flex gap-1 flex-wrap">
+            {% if r.get("order_response") %}
+              <button type="button" class="btn btn-sm btn-info" onclick="toggleOrderResponse({{ r['id'] }}, this)">
+                Заказ
+              </button>
+              {% if not r['order_response'].get('success') %}
+                <form method="post" action="{{ url_for('admin.resend_order', link_id=r['id']) }}" style="display:inline" onsubmit="return confirm('Повторно отправить заказ?');">
+                  <button type="submit" class="btn btn-sm btn-warning">Повторить</button>
+                </form>
+              {% endif %}
+            {% endif %}
+            {% if r.get("communication_response") %}
+              <button type="button" class="btn btn-sm btn-secondary" onclick="toggleCommResponse({{ r['id'] }}, this)">
+                Коммуникация
+              </button>
             {% endif %}
           </div>
-          <div id="response-{{ r['id'] }}" style="display:none; margin-top:10px;">
+
+          {% if r.get("order_response") %}
+          <div id="response-order-{{ r['id'] }}" style="display:none; margin-top:10px;">
             <div class="card">
               <div class="card-body">
                 <div class="mb-3">
-                  <strong>Запрос:</strong>
+                  <strong>Запрос (заказ):</strong>
                   {% if r['order_response'].get('request') %}
                     <div class="mt-2">
                       <strong>URL:</strong> {{ r['order_response']['request'].get('url', 'N/A') }}<br>
@@ -121,7 +130,7 @@
                 </div>
                 <hr>
                 <div class="mb-3">
-                  <strong>Ответ:</strong>
+                  <strong>Ответ (заказ):</strong>
                   <span class="badge {% if r['order_response'].get('success') %}bg-success{% else %}bg-danger{% endif %} ms-2">
                     {{ r['order_response'].get('status_code', 'N/A') }}
                   </span>
@@ -145,10 +154,57 @@
               </div>
             </div>
           </div>
+          {% endif %}
+
+          {% if r.get("communication_response") %}
+          <div id="response-comm-{{ r['id'] }}" style="display:none; margin-top:10px;">
+            <div class="card">
+              <div class="card-body">
+                <div class="mb-3">
+                  <strong>Запрос (коммуникация):</strong>
+                  {% if r['communication_response'].get('request') %}
+                    <div class="mt-2">
+                      <strong>URL:</strong> {{ r['communication_response']['request'].get('url', 'N/A') }}<br>
+                      <strong>Метод:</strong> {{ r['communication_response']['request'].get('method', 'POST') }}<br>
+                      <strong>Время запроса:</strong> {{ r['communication_response']['request'].get('timestamp', 'N/A') }}<br>
+                      <strong>Payload:</strong>
+                      <pre class="bg-light p-2 mt-2" style="max-height:300px; overflow:auto; font-size:11px;">{{ r['communication_response']['request'].get('payload')|tojson(indent=2) }}</pre>
+                    </div>
+                  {% else %}
+                    <span class="text-muted">Не сохранён</span>
+                  {% endif %}
+                </div>
+                <hr>
+                <div class="mb-3">
+                  <strong>Ответ (коммуникация):</strong>
+                  <span class="badge {% if r['communication_response'].get('success') %}bg-success{% else %}bg-danger{% endif %} ms-2">
+                    {{ r['communication_response'].get('status_code', 'N/A') }}
+                  </span>
+                  <br><br>
+                  <strong>Время ответа:</strong> {{ r['communication_response'].get('timestamp', 'N/A') }}<br>
+                  {% if r['communication_response'].get('response_json') %}
+                    <strong>Ответ (JSON):</strong>
+                    <pre class="bg-light p-2 mt-2" style="max-height:300px; overflow:auto; font-size:11px;">{{ r['communication_response']['response_json']|tojson(indent=2) }}</pre>
+                  {% endif %}
+                  {% if r['communication_response'].get('response_text') %}
+                    <strong>Ответ (текст):</strong>
+                    <pre class="bg-light p-2 mt-2" style="max-height:300px; overflow:auto; font-size:11px;">{{ r['communication_response']['response_text'] }}</pre>
+                  {% endif %}
+                  {% if r['communication_response'].get('error') %}
+                    <strong>Ошибка:</strong>
+                    <div class="alert alert-danger mt-2">
+                      <strong>{{ r['communication_response'].get('error_type', 'Error') }}:</strong> {{ r['communication_response']['error'] }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
         {% elif r.get("status") == "AGREED" %}
-          <span class="text-warning" title="Заказ создаётся...">Ожидание...</span>
+          <span class="text-warning" title="Заказ/коммуникация создаются...">Ожидание...</span>
         {% else %}
-          <span class="text-muted" title="Заказ будет создан после согласия">-</span>
+          <span class="text-muted" title="Заказ и коммуникация будут созданы после согласия">-</span>
         {% endif %}
       </td>
     </tr>
@@ -157,15 +213,27 @@
 </table>
 
 <script>
-function toggleResponse(linkId) {
-  const el = document.getElementById('response-' + linkId);
-  const btn = event.target;
+function toggleOrderResponse(linkId, btn) {
+  const el = document.getElementById('response-order-' + linkId);
+  if (!el) return;
   if (el.style.display === 'none') {
     el.style.display = 'block';
-    btn.textContent = 'Скрыть';
+    btn.textContent = 'Скрыть заказ';
   } else {
     el.style.display = 'none';
-    btn.textContent = 'Показать';
+    btn.textContent = 'Заказ';
+  }
+}
+
+function toggleCommResponse(linkId, btn) {
+  const el = document.getElementById('response-comm-' + linkId);
+  if (!el) return;
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    btn.textContent = 'Скрыть комм.';
+  } else {
+    el.style.display = 'none';
+    btn.textContent = 'Коммуникация';
   }
 }
 
