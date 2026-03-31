@@ -44,6 +44,7 @@ def init_db():
           id INTEGER PRIMARY KEY,
           name TEXT,
           phone TEXT,
+          identification_number TEXT,
           email TEXT,
           filial_id INTEGER,
           customer_account_id INTEGER UNIQUE
@@ -122,6 +123,12 @@ def init_db():
         # CRM customer id (from segment upload) — optional
         try:
             c.execute("ALTER TABLE users ADD COLUMN customer_id INTEGER")
+        except sqlite3.OperationalError:
+            pass
+
+        # Optional identification number (IIN/BIN) for communication extensions
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN identification_number TEXT")
         except sqlite3.OperationalError:
             pass
 

@@ -43,6 +43,8 @@ class Config:
     COMM_DESCRIPTION_TEST_PREFIX = os.getenv("COMM_DESCRIPTION_TEST_PREFIX", "0").strip().lower() in (
         "1", "true", "yes", "on",
     )
+    _pgd = os.getenv("COMM_PRODUCT_GROUP_DIVISION", "4").strip()
+    COMM_PRODUCT_GROUP_DIVISION = int(_pgd) if _pgd else 4
 
 
 def validate_config():
@@ -549,10 +551,12 @@ def _post_communication(url: str, payload: dict, timeout: int, idem_key: str):
         retry=retry_if_exception_type((requests.Timeout, requests.ConnectionError)),
     )
     def _inner():
+        # Communication API on this contour expects raw token value in AUTHORIZATION header
+        # (without the "Bearer " prefix, as in working Postman/curl examples).
         headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "AUTHORIZATION": f"Bearer {api_key}",
+            "AUTHORIZATION": api_key,
             "Idempotency-Key": idem_key,
         }
         return requests.post(url, json=payload, headers=headers, timeout=timeout)
@@ -593,7 +597,7 @@ def create_communication_from_agree(link_id: int):
     with db() as conn:
         c = conn.cursor()
         c.execute(
-            """SELECT l.*, u.filial_id, u.customer_account_id, u.phone, u.customer_id,
+            """SELECT l.*, u.filial_id, u.customer_account_id, u.phone, u.customer_id, u.name, u.identification_number,
                       u.id AS uid
                FROM links l
                JOIN users u ON u.id = l.user_id
@@ -629,9 +633,6 @@ def create_communication_from_agree(link_id: int):
             conn.commit()
             return
 
-        base_external = row_dict.get("external_id") or f"LNK-{link_id}"
-        ext_comm = f"{base_external}-COMM"
-
         phone = row_dict.get("phone")
         if phone:
             phone_str = str(phone).strip()
@@ -641,17 +642,48 @@ def create_communication_from_agree(link_id: int):
         else:
             comm_addr = ""
 
-        desc_parts = []
-        if current_app.config.get("COMM_DESCRIPTION_TEST_PREFIX"):
-            desc_parts.append("[TEST]")
-        desc_parts.append(
-            f"Лендинг: согласие на «{offer.get('title', '')}» ({offer.get('bundle', '')})"
-        )
-        desc_parts.append(f"link_id={link_id} external_id={base_external}")
-        description = " ".join(desc_parts)
+        po_name = offer.get("title") or ""
+        description = "CVM - Потенциальная сделка"
 
         ca_raw = row_dict.get("customer_account_id")
         ca_id = int(ca_raw) if ca_raw is not None and str(ca_raw).strip() != "" else -1
+        ext_comm = f"cvm_{ca_id}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+        # Build plain text address from saved address_json
+        address_name = ""
+        try:
+            addr = json.loads(row_dict.get("address_json") or "{}")
+            if isinstance(addr, dict):
+                parts = []
+                town = addr.get("TOWN_NAME")
+                street = addr.get("STREET_NAME")
+                house = addr.get("HOUSE")
+                sub_house = addr.get("SUB_HOUSE")
+                flat = addr.get("FLAT")
+                if town:
+                    parts.append(str(town))
+                if street:
+                    parts.append(str(street))
+                house_txt = ""
+                if house is not None and str(house).strip() != "":
+                    house_txt = f"д. {house}"
+                    if sub_house:
+                        house_txt += f"/{sub_house}"
+                if house_txt:
+                    parts.append(house_txt)
+                if flat is not None and str(flat).strip() != "":
+                    parts.append(f"кв. {flat}")
+                address_name = ", ".join(parts)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            address_name = ""
+
+        contact_name = (row_dict.get("name") or "").strip()
+        customer_name = contact_name
+        identification_number = (row_dict.get("identification_number") or "").strip()
+        if identification_number.endswith(".0"):
+            identification_number = identification_number[:-2]
+
+        comments_text = f"Согласился на продуктовое предложение {po_name}"
 
         payload = {
             "CUSTOMER_ID": cust_id_int,
@@ -664,6 +696,26 @@ def create_communication_from_agree(link_id: int):
             "COMMUNICATION_TYPE_ID": ct_id,
             "MS_SEGMENT_GROUP_ID": int(current_app.config.get("MS_SEGMENT_GROUP_ID") or 1),
             "CREATE_USER": current_app.config.get("COMM_CREATE_USER") or "LANDING",
+            "EXTENSIONS": [
+                {"KEY": "FILIAL_ID", "VALUE": row_dict.get("filial_id") or 17},
+                {"KEY": "OPPORTUNITY_STATUS_ID", "VALUE": 1},
+                {"KEY": "OPPORTUNITY_ASSIGN_RULE_ID", "VALUE": 1},
+                {"KEY": "COMMENTS", "VALUE": comments_text},
+                {"KEY": "CURRENT_USER", "VALUE": None},
+                {"KEY": "SALES_USER", "VALUE": None},
+                {"KEY": "FORECAST_SUM", "VALUE": 100000},
+                {"KEY": "CUST_ORDER_ID", "VALUE": -1},
+                {"KEY": "OPPORTUNITY_REJECT_REASON_ID", "VALUE": 0},
+                {"KEY": "CREATE_USER", "VALUE": None},
+                {"KEY": "COMMENT_ON_REJECT", "VALUE": " "},
+                {"KEY": "IDENTIFICATION_NUMBER", "VALUE": identification_number},
+                {"KEY": "ADDRESS_NAME", "VALUE": address_name},
+                {"KEY": "CONTACT_NAME", "VALUE": contact_name},
+                {"KEY": "WORK_PHONE", "VALUE": ""},
+                {"KEY": "CUSTOMER_NAME", "VALUE": customer_name},
+                {"KEY": "PRODUCT_GROUP_DIVISION", "VALUE": [int(current_app.config.get("COMM_PRODUCT_GROUP_DIVISION") or 4)]},
+                {"KEY": "EMAIL", "VALUE": ""},
+            ],
         }
 
         request_data = {

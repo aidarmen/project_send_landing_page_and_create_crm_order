@@ -650,6 +650,19 @@ def upload_new():
             customer_id_col = col
             break
 
+    # Optional: subscriber name and identification number (IIN/BIN)
+    name_col = None
+    for col in df.columns:
+        if col.lower().strip() in ("name", "full_name", "customer_name", "contact_name"):
+            name_col = col
+            break
+
+    identification_col = None
+    for col in df.columns:
+        if col.lower().strip() in ("identification_number", "iin", "iin_bin", "iin/bin", "bin"):
+            identification_col = col
+            break
+
     # Check for required address columns in file
     address_columns = {
         "town_name": "TOWN_NAME",
@@ -834,6 +847,21 @@ def upload_new():
                         phone_str = phone_str[:-2]
                     phone = phone_str
 
+            subscriber_name = None
+            if name_col:
+                nv = row_data.get(name_col)
+                if pd.notna(nv) and str(nv).strip() and str(nv).strip().lower() not in ("nan", "none", "null", ""):
+                    subscriber_name = str(nv).strip()
+
+            identification_number = None
+            if identification_col:
+                iv = row_data.get(identification_col)
+                if pd.notna(iv) and str(iv).strip() and str(iv).strip().lower() not in ("nan", "none", "null", ""):
+                    identification_number = str(iv).strip()
+                    # If Excel parsed IIN as float (e.g. 7802....0), trim the suffix
+                    if identification_number.endswith(".0"):
+                        identification_number = identification_number[:-2]
+
             parsed_customer_id = None
             if customer_id_col:
                 cv = row_data.get(customer_id_col)
@@ -849,7 +877,7 @@ def upload_new():
 
             # find or create user by customer_account_id
             c.execute(
-                "SELECT id, filial_id, phone, customer_id FROM users WHERE customer_account_id=?",
+                "SELECT id, filial_id, phone, customer_id, name, identification_number FROM users WHERE customer_account_id=?",
                 (customer_account_id,),
             )
             u = c.fetchone()
@@ -863,11 +891,15 @@ def upload_new():
                     c.execute("UPDATE users SET phone=? WHERE id=?", (phone, user_id))
                 if parsed_customer_id is not None and u["customer_id"] != parsed_customer_id:
                     c.execute("UPDATE users SET customer_id=? WHERE id=?", (parsed_customer_id, user_id))
+                if subscriber_name and u["name"] != subscriber_name:
+                    c.execute("UPDATE users SET name=? WHERE id=?", (subscriber_name, user_id))
+                if identification_number and u["identification_number"] != identification_number:
+                    c.execute("UPDATE users SET identification_number=? WHERE id=?", (identification_number, user_id))
             else:
                 c.execute(
-                    """INSERT INTO users (name, phone, email, filial_id, customer_account_id, customer_id)
-                       VALUES (?, ?, ?, ?, ?, ?)""",
-                    (None, phone, None, filial_id, customer_account_id, parsed_customer_id),
+                    """INSERT INTO users (name, phone, identification_number, email, filial_id, customer_account_id, customer_id)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (subscriber_name, phone, identification_number, None, filial_id, customer_account_id, parsed_customer_id),
                 )
                 user_id = c.lastrowid
 
